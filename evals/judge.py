@@ -78,6 +78,8 @@ class Judge:
         if kind == "claude":
             import anthropic
             self.client, self.model = anthropic.Anthropic(), CLAUDE_JUDGE
+        elif kind == "claude-code":
+            self.client, self.model = None, model or "opus"
         else:
             from openai import OpenAI
             self.client, self.model = OpenAI(base_url=LOCAL_URL, api_key="ollama"), model or LOCAL_MODEL
@@ -97,6 +99,8 @@ class Judge:
         )
         if self.kind == "claude":
             text = self._claude(prompt)
+        elif self.kind == "claude-code":
+            return self._claude_code(prompt)
         elif self.model == LOCAL_MODEL:
             # same model as the agent: reuse its loaded instance (another num_ctx would reload it)
             text = self._local(prompt)
@@ -148,3 +152,27 @@ class Judge:
         self.usage["input"] += data.get("prompt_eval_count", 0)
         self.usage["output"] += data.get("eval_count", 0)
         return data["message"]["content"]
+
+    def _claude_code(self, prompt: str) -> dict:
+        """Claude Code in headless mode: runs on the Claude subscription, not on API credits."""
+        import os
+        import subprocess
+        import tempfile
+
+        # an API key in the environment (loaded from .env) would take precedence over the login
+        env = {k: v for k, v in os.environ.items()
+               if k not in {"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"}}
+        cmd = ["claude", "-p", prompt, "--model", self.model, "--output-format", "json",
+               "--json-schema", json.dumps(SCHEMA), "--tools", "", "--no-session-persistence",
+               "--strict-mcp-config", "--setting-sources", ""]
+        with tempfile.TemporaryDirectory() as cwd:  # no project files or CLAUDE.md in context
+            r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
+        if r.returncode != 0:
+            raise RuntimeError(f"claude exited {r.returncode}: {(r.stderr or r.stdout)[-300:]}")
+        data = json.loads(r.stdout)
+        if data.get("is_error") or not isinstance(data.get("structured_output"), dict):
+            raise RuntimeError(f"no structured output: {str(data.get('result'))[:200]}")
+        for m in (data.get("modelUsage") or {}).values():
+            self.usage["input"] += m.get("inputTokens", 0) + m.get("cacheReadInputTokens", 0)
+            self.usage["output"] += m.get("outputTokens", 0)
+        return data["structured_output"]

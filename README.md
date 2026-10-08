@@ -73,7 +73,9 @@ python -m evals.run evals/results/<run>.json --rejudge --judge claude   # re-gra
 python -m evals.report evals/results/*.json --md evals/REPORT.md
 ```
 
-The judge is the local model by default (free); `--judge claude` uses `claude-opus-5-5` (paid API).
+The judge is the local model by default (free); `--judge-model gemma4:26b` picks another local
+model, `--judge claude-code` grades through Claude Code on the Claude subscription (no API
+credits), `--judge claude` uses the paid API.
 `--source` limits retrieval to one indexed folder, so other folders in a shared collection
 never reach the API. Every answer also records tokens, cost and latency.
 

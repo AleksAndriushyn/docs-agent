@@ -85,7 +85,8 @@ def main() -> None:
     ap.add_argument("--only-ungraded", action="store_true", help="With --rejudge: retry failed grades in place")
     ap.add_argument("--collection")
     ap.add_argument("--provider", choices=["local", "anthropic"], default="local")
-    ap.add_argument("--judge", choices=["local", "claude"], default="local")
+    ap.add_argument("--judge", choices=["local", "claude", "claude-code"], default="local",
+                    help="claude: API credits; claude-code: the Claude subscription via the CLI")
     ap.add_argument("--judge-model", help="Local judge model (default: the agent's LOCAL_MODEL)")
     ap.add_argument("--source", action="append", help="Restrict retrieval to these indexed folders")
     ap.add_argument("--only", help="Comma-separated case ids")
