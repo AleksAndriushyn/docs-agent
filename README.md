@@ -1,5 +1,7 @@
 # Docs Agent
 
+[![CI](https://github.com/AleksAndriushyn/docs-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/AleksAndriushyn/docs-agent/actions/workflows/ci.yml)
+
 CLI agents that answer questions about your files via tool calling. Fully local mode:
 Ollama (LLM + embeddings) and Qdrant in embedded mode, nothing leaves the machine.
 
