@@ -1,0 +1,631 @@
+{
+ "dataset": "evals/qa_work.jsonl",
+ "collection": "work",
+ "provider": "local",
+ "model": "qwen3.6:latest",
+ "judge": "claude-code:opus",
+ "judge_usage": {
+  "input": 10278,
+  "output": 4546
+ },
+ "sources": [
+  "/Users/oleksiiandriushyn/Documents/MissionPlanner"
+ ],
+ "created": "2026-10-08 23:56",
+ "cases": [
+  {
+   "id": "work-01",
+   "answerable": true,
+   "question": "Что обязательно реализовать, чтобы написать новый плагин для Mission Planner?",
+   "answer": "Чтобы написать новый плагин для Mission Planner, необходимо создать класс, который наследуется от `MissionPlanner.Plugin.Plugin` и реализует определенный набор свойств и методов.\n\nСогласно примерам из кода (например, плагины `AnonymizeBinlogPlugin`, `OpenDroneID_Plugin`, `TerrainMakerPlugin`), обязательно реализовать следующее:\n\n### 1. Наследование\nКласс вашего плагина должен наследоваться от базового класса `MissionPlanner.Plugin.Plugin`:\n```csharp\npublic class MyPlugin : MissionPlanner.Plugin.Plugin\n{\n    // ...\n}\n```\n\n### 2. Обязательные свойства (Properties)\nВ классе должны быть переопределены (или реализованы как get-свойства) три строковых свойства:\n*   **Name**: Название плагина, которое будет отображаться в интерфейсе [3].\n*   **Version**: Версия плагина [3].\n*   **Author**: Имя автора плагина [3].\n\nПример реализации:\n```csharp\npublic override string Name => \"My Plugin\";\npublic override string Version => \"1.0\";\npublic override string Author => \"Author Name\";\n```\n\n### 3. Обязательные методы (Methods)\nКласс должен содержать реализацию следующих виртуальных методов, возвращающих `bool`:\n\n*   **`Init()`**: Вызывается при инициализации плагина.\n    *   Это критически важный метод: если он вернет `false`, плагин не будет загружен [5]. Обычно возвращает `true`.\n*   **`Loaded()`**: Вызывается после того, как плагин успешно загрузился. Здесь обычно происходит инициализация пользовательского интерфейса (добавление вкладок в меню или элементов в главное окно) [4].\n    *   Для добавления пунктов в меню используется объект `Host.FDMenuMap` [3].\n*   **`Loop()`**: Вызывается периодически во время работы Mission Planner. Используется для выполнения фоновых задач или опроса данных. Должен возвращать `true`, чтобы продолжал работать [3].\n*   **`Exit()`**: Вызывается при выгрузке плагина или закрытии программы. Здесь следует освободить ресурсы и убрать созданные элементы интерфейса [4].\n\n### 4. Размещение файла\nСкомпилированный код (или исходный файл, если используется система on-the-fly компиляции) должен находиться в папке `Plugins` внутри каталога установки Mission Planner:\n> \"Copy this file as it is to the Mission Planner/Plugins directory\" [1].\n\n### 5. Доступ к интерфейсу (Host)\nДля взаимодействия с основным окном программы используется статический объект `Host`. Например, для доступа к главному оклу используется конструкция `Host.MainForm`, а для добавления элементов в меню — `Host.FDMenuMap` [3], [4].\n\nSources:\n[3] MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43\n[5] MissionPlanner/Plugins/TerrainMakerPlugin/TerrainMakerPlugin.cs:1-59\n[4] MissionPlanner/Plugins/OpenDroneID2/OpenDroneID_Plugin.cs:7-89\n[1] MissionPlanner/Plugins/InitialParamsCalculator.cs:1-42",
+   "error": null,
+   "seconds": 36.4,
+   "tool_calls": 2,
+   "usage": {
+    "input": 6174,
+    "output": 2084,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43",
+    "MissionPlanner/Plugins/TerrainMakerPlugin/TerrainMakerPlugin.cs:1-59",
+    "MissionPlanner/Plugins/OpenDroneID2/OpenDroneID_Plugin.cs:7-89",
+    "MissionPlanner/Plugins/InitialParamsCalculator.cs:1-42"
+   ],
+   "citation_hit": false,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 4,
+    "total": 4,
+    "facts": [
+     {
+      "fact": "наследование от абстрактного класса Plugin (MissionPlanner.Plugin)",
+      "terms": [
+       "MissionPlanner"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "абстрактные свойства Name, Version, Author",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "абстрактные методы Init(), Loaded() и Exit()",
+      "terms": [
+       "Init",
+       "Loaded",
+       "Exit"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "наследование от абстрактного класса Plugin (MissionPlanner.Plugin)",
+      "present": true
+     },
+     {
+      "fact": "абстрактные свойства Name, Version, Author",
+      "present": true
+     },
+     {
+      "fact": "абстрактные методы Init(), Loaded() и Exit()",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "All three key facts are covered (inheritance from MissionPlanner.Plugin.Plugin, the Name/Version/Author properties, and the Init/Loaded/Exit methods), but the answer has two inaccuracies: it calls the methods \"virtual\" instead of abstract and wrongly lists Loop() as mandatory; I treated these as minor slips rather than contradictions, so the verdict is a borderline \"correct\"."
+   }
+  },
+  {
+   "id": "work-02",
+   "answerable": true,
+   "question": "Откуда Mission Planner загружает плагины и в каком виде они могут быть?",
+   "answer": "Mission Planner загружает плагины из директории `plugins`, которая находится в папке с запущенным исполняемым файлом программы (полный путь формируется как `Settings.GetRunningDirectory() + \"plugins\" + Path.DirectorySeparatorChar` [1]).\n\nПлагины могут быть представлены в двух видах:\n\n1.  **Скомпилированные библиотеки (.dll)**\n    *   Загружаются через метод `PluginLoader.Load(file)` [2].\n    *   Система проверяет, чтобы файл заканчивался на `.dll` и не содержал системных названий (например, `microsoft.`, `system.`, `missionplanner.grid.dll`) [2].\n    *   Плагин загружается как сборка (Assembly) с помощью `Assembly.LoadFile(file)` [2].\n\n2.  **Исходные коды на C# (.cs)**\n    *   Система ищет файлы с расширением `.cs` в папке плагинов [1].\n    *   Плагин компилируется \"на лету\" (background compiled) прямо во время работы программы [1].\n    *   В начале таких файлов можно использовать специальную директиву `//loadassembly: ...` для подключения дополнительных сборок, необходимых плагину (например, `MissionPlanner.WebAPIs`) [3].\n\n**Структура плагина:**\nНезависимо от формата, код плагина должен реализовывать класс, наследующийся от `MissionPlanner.Plugin.Plugin` [5]. Основные методы, которые можно переопределять:\n*   `Name`, `Version`, `Author` — метаданные плагина.\n*   `Init()` — инициализация.\n*   `Loaded()` — вызывается после загрузки (например, для добавления элементов в меню).\n*   `Loop()` — выполняется периодически.\n*   `Exit()` — действие при выходе.\n\nSources:\n[1] MissionPlanner/Plugin/PluginLoader.cs:203-231\n[2] MissionPlanner/Plugin/PluginLoader.cs:99-143\n[3] MissionPlanner/Plugins/example.cs:1-36\n[5] MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43",
+   "error": null,
+   "seconds": 11.8,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3491,
+    "output": 588,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/Plugin/PluginLoader.cs:203-231",
+    "MissionPlanner/Plugin/PluginLoader.cs:99-143",
+    "MissionPlanner/Plugins/example.cs:1-36",
+    "MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 2,
+    "total": 2,
+    "facts": [
+     {
+      "fact": "папка plugins в каталоге запуска Mission Planner",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "плагины в виде .dll",
+      "terms": [
+       ".dll"
+      ],
+      "missing": []
+     },
+     {
+      "fact": ".cs-файлы компилируются в фоне при загрузке",
+      "terms": [
+       ".cs"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "папка plugins в каталоге запуска Mission Planner",
+      "present": true
+     },
+     {
+      "fact": "плагины в виде .dll",
+      "present": true
+     },
+     {
+      "fact": ".cs-файлы компилируются в фоне при загрузке",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts: the plugins folder in the directory MP runs from, .dll plugins, and .cs source files compiled in the background, with no contradictions."
+   }
+  },
+  {
+   "id": "work-03",
+   "answerable": true,
+   "question": "Когда и в каком потоке вызывается Loop() у плагина Mission Planner?",
+   "answer": "Метод `Loop()` у плагина Mission Planner вызывается в отдельном фоновом потоке, который называется **PluginThread**.\n\nВот основные детали:\n\n1.  **Поток вызова:** Метод выполняется в потоке `pluginthread` (или `PluginThread`), который запускается и управляется внутри главного окна приложения (`MainV2`) [6].\n2.  **Когда вызывается:** Вызов происходит непрерывно в цикле, но с учетом заданной частоты обновления плагина (`loopratehz`).\n    *   Если у плагина `loopratehz > 0`, система вычисляет время до следующего запуска: `msnext = 1000 / plugin.loopratehz` [6].\n    *   Метод `Loop()` вызывается только тогда, когда текущее время превышает запланированное время следующего запуска (`DateTime.Now > plugin.NextRun`) [6].\n3.  **Задержка:** Между проверками и вызовами поток спит (вызывает `Thread.Sleep`), чтобы не перегружать процессор. Максимальная частота ограничена 100 Гц для предотвращения чрезмерного использования ресурсов [6].\n\nТаким образом, `Loop()` работает в собственном фоновом потоке планировщика плагинов (`PluginThread`) и выполняется циклически с частотой, указанной в свойстве `loopratehz` конкретного плагина.\n\nSources:\n[6] MissionPlanner/MainV2.cs:2506-2581",
+   "error": null,
+   "seconds": 14.3,
+   "tool_calls": 2,
+   "usage": {
+    "input": 5602,
+    "output": 615,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/MainV2.cs:2506-2581"
+   ],
+   "citation_hit": false,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 1,
+    "total": 1,
+    "facts": [
+     {
+      "fact": "вызывается в фоновом потоке, общем с другими плагинами",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "время следующего вызова задаёт NextRun",
+      "terms": [
+       "NextRun"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "частота задаётся loopratehz",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "вызывается в фоновом потоке, общем с другими плагинами",
+      "present": true
+     },
+     {
+      "fact": "время следующего вызова задаёт NextRun",
+      "present": true
+     },
+     {
+      "fact": "частота задаётся loopratehz",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts: Loop() runs on the plugin scheduler's background thread (PluginThread), it is timed by NextRun, and its frequency comes from loopratehz. It doesn't say NextRun can be overridden inside Loop, but that wasn't a key fact, and the \"own thread\" wording only loosely says the thread is shared."
+   }
+  },
+  {
+   "id": "work-04",
+   "answerable": true,
+   "question": "Где Mission Planner обрабатывает сообщение SYS_STATUS и как из него получаются ток батареи и загрузка?",
+   "answer": "В Mission Planner сообщение `SYS_STATUS` (MAVLink) обрабатывается в методе `Parent_OnPacketReceived` класса `CurrentState`, который находится в файле `ExtLibs/ArduPilot/CurrentState.cs`.\n\nКонкретно код обработки выглядит следующим образом:\n\n1.  **Загрузка (Load):**\n    Загружается поле `sysstatus.load` и делится на 10, чтобы получить значение в процентах [4]:\n    ```csharp\n    load = sysstatus.load / 10.0f;\n    ```\n\n2.  **Остаток заряда батареи (Battery Remaining):**\n    Прямое присваивание значения из сообщения:\n    ```csharp\n    battery_remaining = sysstatus.battery_remaining;\n    ```\n\n3.  **Ток батареи (Current Battery):**\n    Значение `sysstatus.current_battery` делится на 100 для конвертации в Амперы [4]:\n    ```csharp\n    current = sysstatus.current_battery / 100.0f;\n    ```\n\nТакже из этого же сообщения извлекается информация о количестве пакетов, потерянных удаленным коммутатором (`packetdropremote`) [4].\n\n*Примечание:* Если бортовой компьютер не отправляет ток через `SYS_STATUS`, Mission Planner может получать актуальные данные тока и напряжения через сообщение `BATTERY_STATUS` (MAVLink v2), обрабатываемое в том же методе чуть ниже по коду [2].\n\nSources:\n[4] MissionPlanner/ExtLibs/ArduPilot/CurrentState.cs:2925-2955\n[2] MissionPlanner/ExtLibs/ArduPilot/CurrentState.cs:3069-3091",
+   "error": null,
+   "seconds": 11.3,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3561,
+    "output": 585,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/ExtLibs/ArduPilot/CurrentState.cs:2925-2955",
+    "MissionPlanner/ExtLibs/ArduPilot/CurrentState.cs:3069-3091"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 4,
+    "total": 4,
+    "facts": [
+     {
+      "fact": "обработка в CurrentState.cs в case SYS_STATUS",
+      "terms": [
+       "SYS_STATUS",
+       "CurrentState"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "ток: current_battery / 100",
+      "terms": [
+       "100"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "загрузка: load / 10",
+      "terms": [
+       "10"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "battery_remaining копируется напрямую",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "обработка в CurrentState.cs в case SYS_STATUS",
+      "present": true
+     },
+     {
+      "fact": "ток: current_battery / 100",
+      "present": true
+     },
+     {
+      "fact": "загрузка: load / 10",
+      "present": true
+     },
+     {
+      "fact": "battery_remaining копируется напрямую",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer has the right file and the right conversions for current, load and battery_remaining. Its extra details don't contradict the reference."
+   }
+  },
+  {
+   "id": "work-05",
+   "answerable": true,
+   "question": "Как Mission Planner скачивает список параметров с автопилота?",
+   "answer": "Mission Planner скачивает список параметров с автопилота с помощью протокола **MAVLink**, используя следующие шаги и механизмы:\n\n### 1. Основной метод получения списка\nЗагрузка параметров инициируется методом `getParamList` (или его асинхронной версией `getParamListAsync`) в классе `MAVLinkInterface` [9]. Этот метод отправляет запрос автопилоту на получение полного списка всех доступных параметров.\n\n### 2. Запрос полного списка (PARAM_REQUEST_LIST)\nПервым делом Mission Planner формирует и отправляет пакет MAVLink типа `PARAM_REQUEST_LIST` (сообщение с идентификатором `MAVLINK_MSG_ID.PARAM_REQUEST_LIST`) [9]. В этом запросе указываются целевой системный ID (`target_system`) и компонентный ID (`target_component`) автопилота.\n\n### 3. Получение количества параметров\nАвтопилот отвечает первым пакетом типа `PARAM_VALUE`, в котором поле `param_count` содержит общее количество параметров на борту, а поля `param_id` и `param_value` могут содержать значение нулевого параметра или общую информацию [14]. Mission Planner сохраняет это число (`param_total`) для отслеживания прогресса загрузки.\n\n### 4. Последовательное получение параметров\nПосле получения общего количества автопилот начинает отправлять пакеты `PARAM_VALUE`, содержащие пары \"имя_параметра\" (строка до 16 байт) и его значение [13], [14]. Mission Planner подписывается на эти пакеты (`SubscribeToPacketType`) и накапливает их в список `MAVLinkParamList` [8], [11].\n\n### 5. Механизм надежности (Retry и One-by-one)\nЕсли автопилот не отправляет полный список сразу или данные теряются из-за зашумленности канала связи, Mission Planner использует два механизма восстановления:\n*   **Повторный запрос полного списка:** Если получен менее 75% параметров в течение определенного времени, программа повторно отправляет `PARAM_REQUEST_LIST` для начала передачи с самого первого параметра [8], [11].\n*   **Запрос по одному (One-by-one):** Если стандартный поток данных не работает, Mission Planner может переключиться на пошаговый запрос. Он отправляет `PARAM_REQUEST_INDEX`, указывая конкретный индекс нужного параметра, и ждет ответа только для него [8].\n\n### 6. Альтернативный метод (MAVFTP)\nДля современных автопилотов с поддержкой протокола MAVFTP Mission Planner может использовать его для загрузки файла параметров (например, `PARAMETER_FILE`) целиком как бинарный файл, который затем распаковывается в список [12]. Если этот метод failsafe-ится или не поддерживается, код возвращается к стандартному методу по `PARAM_REQUEST_LIST` [9], [10].\n\n### 7. Сохранение типов\nВо время загрузки Mission Planner также сохраняет типы данных параметров (например, REAL32, INT32, UINT16) в словаре `param_types`, чтобы корректно отображать и изменять их значения в интерфейсе [4], [12].\n\nSources:\n[9] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1929-1974\n[14] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2009-2039\n[13] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1668-1704\n[8] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2117-2145\n[11] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2084-2116\n[12] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1897-1928\n[10] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1781-1820\n[4] MissionPlanner/Plugins/example22-payloadconfig.cs:1-32",
+   "error": null,
+   "seconds": 25.5,
+   "tool_calls": 3,
+   "usage": {
+    "input": 17531,
+    "output": 1081,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 4,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1929-1974",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2009-2039",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1668-1704",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2117-2145",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:2084-2116",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1897-1928",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:1781-1820",
+    "MissionPlanner/Plugins/example22-payloadconfig.cs:1-32"
+   ],
+   "citation_hit": true,
+   "fact_recall": 0.5,
+   "exact": {
+    "found": 4,
+    "total": 5,
+    "facts": [
+     {
+      "fact": "getParamList в MAVLinkInterface",
+      "terms": [
+       "getParamList",
+       "MAVLinkInterface"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "сначала через MAVFTP (getParamListMavftp)",
+      "terms": [
+       "MAVFTP",
+       "getParamListMavftp"
+      ],
+      "missing": [
+       "getParamListMavftp"
+      ]
+     },
+     {
+      "fact": "запасной старый способ через PARAM_REQUEST_LIST",
+      "terms": [
+       "PARAM_REQUEST_LIST"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "выполняется в фоне с диалогом прогресса",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "getParamList в MAVLinkInterface",
+      "present": true
+     },
+     {
+      "fact": "сначала через MAVFTP (getParamListMavftp)",
+      "present": false
+     },
+     {
+      "fact": "запасной старый способ через PARAM_REQUEST_LIST",
+      "present": true
+     },
+     {
+      "fact": "выполняется в фоне с диалогом прогресса",
+      "present": false
+     }
+    ],
+    "contradictions": [
+     "Ответ утверждает, что «первым делом» отправляется PARAM_REQUEST_LIST, а MAVFTP — лишь альтернативный метод; по эталону сначала используется MAVFTP (getParamListMavftp), а PARAM_REQUEST_LIST — запасной вариант."
+    ],
+    "refused": false,
+    "verdict": "incorrect",
+    "comment": "В ответе перепутан порядок: основным путём назван PARAM_REQUEST_LIST, а не MAVFTP; также не упомянуты фоновое выполнение и диалог прогресса."
+   }
+  },
+  {
+   "id": "work-06",
+   "answerable": true,
+   "question": "How can a Mission Planner plugin add an item to the FlightData map context menu and know where the user clicked?",
+   "answer": "A Mission Planner plugin can add an item to the FlightData map context menu and know where the user clicked by interacting with the `PluginHost` properties exposed in the `MissionPlanner.Plugin.Plugin` base class.\n\n### 1. Adding an Item to the Context Menu\n\nThe `PluginHost` class provides a property called `FDMenuMap`, which returns the `ContextMenuStrip` associated with the map in the FlightData view [1]. You can add items to this menu during the plugin's `Loaded()` lifecycle method.\n\nTo do this:\n1.  Create a `ToolStripMenuItem`.\n2.  Assign an event handler to its `Click` property.\n3.  Add the item to `Host.FDMenuMap.Items` [6].\n\n**Example:**\n```csharp\npublic override bool Loaded()\n{\n    var menuItem = new ToolStripMenuItem(\"My Plugin Action\");\n    menuItem.Click += MyPluginAction_Click;\n    \n    // Add to the FlightData map context menu\n    Host.FDMenuMap.Items.Add(menuItem);\n    \n    return true;\n}\n\nprivate void MyPluginAction_Click(object sender, EventArgs e)\n{\n    // Handle the click event\n}\n```\n\n### 2. Getting the Click Location (Coordinates)\n\nThe `PluginHost` also exposes a property called `FDMenuMapPosition` [1]. This property returns the geographic coordinates (`PointLatLng`) where the user right-clicked to open the menu. It is derived from the `MouseDownStart` event of the FlightData view [1].\n\n**Example:**\n```csharp\nprivate void MyPluginAction_Click(object sender, EventArgs e)\n{\n    // Get the position where the context menu was triggered\n    PointLatLng clickPosition = Host.FDMenuMapPosition;\n    \n    if (clickPosition != null)\n    {\n        System.Diagnostics.Debug.WriteLine($\"Clicked at Lat: {clickPosition.Lat}, Lng: {clickPosition.Lng}\");\n    }\n}\n```\n\n### Summary of Key Properties\n*   **`Host.FDMenuMap`**: The `ContextMenuStrip` for the FlightData map [1].\n*   **`Host.FDMenuMapPosition`**: The `PointLatLng` where the menu was drawn/triggered [1].\n*   **`Host.FPMenuMap`**: (Alternative) The context menu for the *Flight Planner* map, if you need to interact with that specific view instead [1].\n\nSources:\n[1] MissionPlanner/Plugin/Plugin.cs:130-174\n[6] MissionPlanner/Plugins/example14-mass.cs:1-61",
+   "error": null,
+   "seconds": 16.7,
+   "tool_calls": 2,
+   "usage": {
+    "input": 5555,
+    "output": 781,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/Plugin/Plugin.cs:130-174",
+    "MissionPlanner/Plugins/example14-mass.cs:1-61"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 6,
+    "total": 6,
+    "facts": [
+     {
+      "fact": "via the plugin's Host (PluginHost)",
+      "terms": [
+       "PluginHost"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "Host.FDMenuMap is the FlightData map ContextMenuStrip",
+      "terms": [
+       "FDMenuMap",
+       "FlightData",
+       "ContextMenuStrip"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "Host.FDMenuMapPosition gives the clicked position (PointLatLng)",
+      "terms": [
+       "FDMenuMapPosition",
+       "PointLatLng"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "via the plugin's Host (PluginHost)",
+      "present": true
+     },
+     {
+      "fact": "Host.FDMenuMap is the FlightData map ContextMenuStrip",
+      "present": true
+     },
+     {
+      "fact": "Host.FDMenuMapPosition gives the clicked position (PointLatLng)",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts, Host/PluginHost, FDMenuMap as the ContextMenuStrip and FDMenuMapPosition as a PointLatLng, and nothing in it contradicts the reference."
+   }
+  },
+  {
+   "id": "work-07",
+   "answerable": true,
+   "question": "Что происходит в коде Mission Planner при нажатии кнопки Connect?",
+   "answer": "При нажатии кнопки **Connect** в Mission Planner происходит следующая последовательность действий:\n\n### 1. Запуск обработчика (MenuConnect_Click)\nНажатие кнопки вызывает метод `MenuConnect_Click`, который запускает основной метод `Connect()` и сохраняет конфигурацию [8].\n\n### 2. Проверка состояния и очистка (Connect)\nВ методе `Connect()` происходит следующее:\n*   **Проверка на движение:** Если текущее соединение активно и дрон движется (скорость > 4), программа спрашивает подтверждение на разрыв связи [10].\n*   **Очистка логов:** Закрываются файлы предыдущих сессий логирования (logfile и rawlogfile) [10].\n*   **Определение действия:** Если порт уже открыт (`comPort.BaseStream.IsOpen`), вызывается `doDisconnect`. Если закрыт — вызывается `doConnect` [10].\n\n### 3. Установление соединения (doConnect)\nМетод `doConnect` выполняет инициализацию связи:\n*   **Выбор типа порта:** В зависимости от выбранного порта (Serial, TCP, UDP, UDPCl или WS), настраивается интерфейс подключения [17].\n*   **Открытие потока:** Вызывается внутренний метод `OpenBg`, который открывает базовый поток (`BaseStream.Open()`) [15].\n    *   Если это последовательный порт (SerialPort), делается задержка в 1 секунду для предотвращения проблем с бутлоадером [15].\n*   **Ожидание Heartbeat:** Программа ждет получения пакетов Heartbeat от дрона. Таймаут подключения составляет `CONNECT_TIMEOUT_SECONDS` [14]. Если пакеты не приходят, выбрасывается ошибка `TimeoutException` [14].\n\n### 4. Инициализация MAVLinkInterface\nПосле успешного открытия соединения:\n*   Создается экземпляр `MAVLinkInterface` (comPort) [12].\n*   Добавляется в список активных портов (`MainV2.Comports.Add(mav)`) [12].\n*   Запрашивается полный список параметров дрона (`mav.getParamList()`) [12].\n\n### 5. Обновление интерфейса и загрузка данных\n*   **Обновление UI:** Обновляется значок статуса подключения и индикатор системных ID (SysIDs) [10], [8].\n*   **Загрузка параметров:** Вызывается метод `loadph_serial` для загрузки параметров полета [10].\n*   **Загрузка миссий:** Если в настройках включен параметр `loadwpsonconnect`, автоматически загружаются вейпоинты (путевые точки) через FlightPlanner [6].\n*   **Rally Points:** Если у дрона есть rally points, они также загружаются и проверяются на максимальное расстояние [6], [11].\n\n### 6. Обработка ошибок\nЕсли на любом этапе возникает исключение:\n*   Статус подключения сбрасывается (`IsConnected(false)`) [8].\n*   Иконка соединения обновляется.\n*   Порт закрывается.\n*   Показывается сообщение об ошибке `CustomMessageBox.Show` с деталями исключения [8], [14].\n\n### Альтернативный вариант (SerialSupportProxy)\nВ отдельном окне *Serial Support Proxy* кнопка Connect работает иначе: она создает соединение типа UDP или TCP для зеркалирования потока данных, меняя текст кнопки на \"Stop\" при успешном подключении [3].\n\nSources:\n[8] MissionPlanner/MainV2.cs:1821-1848\n[10] MissionPlanner/MainV2.cs:1849-1898\n[17] MissionPlanner/MainV2.cs:1448-1472\n[15] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:733-764\n[14] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:791-816\n[12] MissionPlanner/Controls/ConnectionOptions.cs:7-52\n[6] MissionPlanner/MainV2.cs:1751-1765\n[11] MissionPlanner/MainV2.cs:1766-1792\n[3] MissionPlanner/Controls/SerialSupportProxy.cs:49-108",
+   "error": null,
+   "seconds": 25.4,
+   "tool_calls": 4,
+   "usage": {
+    "input": 22554,
+    "output": 1024,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 5,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/MainV2.cs:1821-1848",
+    "MissionPlanner/MainV2.cs:1849-1898",
+    "MissionPlanner/MainV2.cs:1448-1472",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:733-764",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:791-816",
+    "MissionPlanner/Controls/ConnectionOptions.cs:7-52",
+    "MissionPlanner/MainV2.cs:1751-1765",
+    "MissionPlanner/MainV2.cs:1766-1792",
+    "MissionPlanner/Controls/SerialSupportProxy.cs:49-108"
+   ],
+   "citation_hit": true,
+   "fact_recall": 0.75,
+   "exact": {
+    "found": 4,
+    "total": 4,
+    "facts": [
+     {
+      "fact": "обработчик MenuConnect_Click в MainV2",
+      "terms": [
+       "MenuConnect_Click",
+       "MainV2"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "вызывает Connect()",
+      "terms": [
+       "Connect"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "подключение в doConnect с именем порта и скоростью (baud)",
+      "terms": [
+       "doConnect"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "по умолчанию загружаются параметры (getparams = true)",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "обработчик MenuConnect_Click в MainV2",
+      "present": true
+     },
+     {
+      "fact": "вызывает Connect()",
+      "present": true
+     },
+     {
+      "fact": "подключение в doConnect с именем порта и скоростью (baud)",
+      "present": false
+     },
+     {
+      "fact": "по умолчанию загружаются параметры (getparams = true)",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "partial",
+    "comment": "The answer correctly gives the chain MenuConnect_Click → Connect() → doConnect and says parameters are loaded, but it never says doConnect takes the port name and baud rate."
+   }
+  },
+  {
+   "id": "work-u1",
+   "answerable": false,
+   "question": "Как настроить отправку уведомлений Mission Planner в Telegram-бот?",
+   "answer": "Согласно предоставленным файлам исходного кода и документации Mission Planner, **нет встроенной настройки** или готовой функции для отправки уведомлений в Telegram-бот. В индексированных материалах (включая файлы конфигурации `config.xml` и код плагинов) отсутствуют упоминания интеграции с Telegram.\n\nОднако, анализируя структуру программы, можно выделить механизмы, которые потенциально можно использовать для реализации такой функции через разработку собственного плагина:\n\n1.  **Плагинная система**: Mission Planner позволяет расширять функциональность через плагины (например, `Plugins/example22-payloadconfig.cs` [13] или `Plugins/AnonymizeBinlogPlugin.cs` [19]).\n2.  **Получение данных**: Плагин мог бы использовать встроенный MAVLink-интерфейс для подписки на пакеты телеметрии и статусы (`MAVLinkInterface.cs` [2]) или перехватывать события через `MainV2.comPort`.\n3.  **Передача данных**: В программе есть встроенный HTTP-сервер (`httpserver.cs` [1]), который транслирует данные (например, состояние полета `MainV2.comPort.MAV.cs` и вейпоинты `MainV2.comPort.MAV.wps`). Теоретически Telegram-бот мог бы опрашивать этот эндпоинт или получать webhook.\n4.  **Существующие уведомления**: В Mission Planner уже реализованы другие виды уведомлений, например, голосовой синтез (`speechenable` [16]), но интеграция с внешними мессенджерами в коде не зафиксирована.\n\nЕсли вы искали готовую опцию в меню настроек, её может не быть в данной версии ПО, и для отправки сообщений в Telegram потребуется стороннее решение или написание кастомного плагина с использованием API Telegram.\n\nSources:\n[13] MissionPlanner/Plugins/example22-payloadconfig.cs:1-32\n[19] MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43\n[2] MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:791-816\n[1] MissionPlanner/Utilities/httpserver.cs:351-370\n[16] MissionPlanner/MainV2.cs:988-1010",
+   "error": null,
+   "seconds": 81.7,
+   "tool_calls": 4,
+   "usage": {
+    "input": 25153,
+    "output": 4825,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 5,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/Plugins/example22-payloadconfig.cs:1-32",
+    "MissionPlanner/Plugins/AnonymizeBinlogPlugin.cs:1-43",
+    "MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs:791-816",
+    "MissionPlanner/Utilities/httpserver.cs:351-370",
+    "MissionPlanner/MainV2.cs:988-1010"
+   ],
+   "citation_hit": null,
+   "fact_recall": null,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": []
+   },
+   "grade": {
+    "facts": [],
+    "contradictions": [],
+    "refused": true,
+    "verdict": "partial",
+    "comment": "The answer correctly says Mission Planner has no built-in Telegram integration, but it then speculates about building one with a custom plugin, the HTTP server or a webhook."
+   }
+  },
+  {
+   "id": "work-u2",
+   "answerable": false,
+   "question": "Какая нейросеть встроена в Mission Planner для распознавания объектов на видео с камеры?",
+   "answer": "Согласно предоставленным материалам, в Mission Planner **нет встроенной нейросети** для распознавания объектов на видео с камеры.\n\nПрограммное обеспечение использует следующие технологии для работы с видеопотоком:\n1.  **OSD (On-Screen Display):** Видеопоток отображается поверх интерфейса программы с использованием библиотек `DirectShowLib` или плагина GStreamer [4], [36]. Код обрабатывает кадры только для вывода на экран и записи в файл, но не для анализа содержимого [4].\n2.  **Отсутствие AI-анализа:** В предоставленном коде отсутствуют реализации моделей искусственного интеллекта (например, YOLO или TensorFlow) для автоматического поиска объектов на видеопотоке [14], [30].\n3.  **Отслеживание объектов:** Существуют плагины (например, `Dowding`), которые позволяют отслеживать объекты, но они делают это на основе внешних данных (координат и позиционной информации в формате CoT), а не путем анализа видео с камеры [13].\n\nТаким образом, распознавание объектов не является встроенной функцией видеопроцессора Mission Planner.\n\nSources:\n[4] MissionPlanner/Controls/OSDVideo.cs:1-48\n[36] MissionPlanner/Plugins/example4-herelink.cs:294-324\n[14] MissionPlanner/Plugins/InitialParamsCalculator.cs:233-268\n[30] MissionPlanner/Plugins/FaceMap/FaceMapUI.cs:1117-1157\n[13] MissionPlanner/Plugins/Dowding/DowdingUI.cs:619-643",
+   "error": null,
+   "seconds": 96.6,
+   "tool_calls": 8,
+   "usage": {
+    "input": 60715,
+    "output": 4622,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 7,
+    "cost_usd": null
+   },
+   "cited": [
+    "MissionPlanner/Controls/OSDVideo.cs:1-48",
+    "MissionPlanner/Plugins/example4-herelink.cs:294-324",
+    "MissionPlanner/Plugins/InitialParamsCalculator.cs:233-268",
+    "MissionPlanner/Plugins/FaceMap/FaceMapUI.cs:1117-1157",
+    "MissionPlanner/Plugins/Dowding/DowdingUI.cs:619-643"
+   ],
+   "citation_hit": null,
+   "fact_recall": null,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": []
+   },
+   "grade": {
+    "facts": [],
+    "contradictions": [],
+    "refused": true,
+    "verdict": "correct",
+    "comment": "The answer correctly says Mission Planner has no built-in neural network for object recognition. Its extra context about the video stack doesn't invent such a feature."
+   }
+  }
+ ]
+}

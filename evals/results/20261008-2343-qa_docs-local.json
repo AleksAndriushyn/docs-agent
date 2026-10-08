@@ -1,0 +1,1183 @@
+{
+ "dataset": "evals/qa_docs.jsonl",
+ "collection": "docs",
+ "provider": "local",
+ "model": "qwen3.6:latest",
+ "judge": "claude-code:opus",
+ "judge_usage": {
+  "input": 20556,
+  "output": 5948
+ },
+ "sources": null,
+ "created": "2026-10-08 23:43",
+ "cases": [
+  {
+   "id": "docs-01",
+   "answerable": true,
+   "question": "Какой параметр включает failsafe по газу и какой порог у него по умолчанию?",
+   "answer": "Для включения failsafe по газу (Throttle Failsafe) используется параметр **`THR_FAILSAFE`**, который должен быть установлен в значение 1 [1]. \n\nПорог срабатывания определяется параметром **`THR_FS_VALUE`**. Значение этого порога по умолчанию равно **950** [2]. Если сигнал газа упадет ниже этого значения при включенном `THR_FAILSAFE`, система перейдет в состояние RC Failsafe [1].\n\nSources:\n[1] docs/apms-failsafe-function.rst:31-47\n[2] docs/apms-failsafe-function.rst:48-63",
+   "error": null,
+   "seconds": 23.8,
+   "tool_calls": 1,
+   "usage": {
+    "input": 4151,
+    "output": 1222,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/apms-failsafe-function.rst:31-47",
+    "docs/apms-failsafe-function.rst:48-63"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 5,
+    "total": 5,
+    "facts": [
+     {
+      "fact": "THR_FAILSAFE = 1 включает throttle failsafe",
+      "terms": [
+       "THR_FAILSAFE",
+       "1"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "порог задаётся параметром THR_FS_VALUE",
+      "terms": [
+       "THR_FS_VALUE"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "значение THR_FS_VALUE по умолчанию 950",
+      "terms": [
+       "THR_FS_VALUE",
+       "950"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "THR_FAILSAFE = 1 включает throttle failsafe",
+      "present": true
+     },
+     {
+      "fact": "порог задаётся параметром THR_FS_VALUE",
+      "present": true
+     },
+     {
+      "fact": "значение THR_FS_VALUE по умолчанию 950",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer gets the parameter (THR_FAILSAFE = 1), the threshold parameter (THR_FS_VALUE) and the default of 950 right, and nothing in it conflicts with the reference."
+   }
+  },
+  {
+   "id": "docs-02",
+   "answerable": true,
+   "question": "Через сколько времени после потери RC-сигнала включается Short Failsafe и что самолёт делает по умолчанию?",
+   "answer": "Short Failsafe включается через **0.5 секунды** после потери RC-сигнала [2].\n\nПо умолчанию самолёт переходит в режим **CIRCLE (КРУЖЕНИЕ)** [2], чтобы попытаться восстановить связь, так как при изменении ориентации антенны сигнал может вернуться.\n\nЭто поведение соответствует параметру `FS_SHORT_ACTN`, который по умолчанию установлен на значение 0 (CONTINUE/CIRCLE) для большинства режимов полета [1]. Если сигнал не восстанавливается в течение времени, заданного параметром `FS_LONG_TIMEOUT`, включается Long Failsafe с действием RTL (возврат домой) по умолчанию [2].\n\nSources:\n[2] docs/apms-failsafe-function.rst:64-75\n[1] docs/apms-failsafe-function.rst:214-250",
+   "error": null,
+   "seconds": 7.5,
+   "tool_calls": 1,
+   "usage": {
+    "input": 4053,
+    "output": 316,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/apms-failsafe-function.rst:64-75",
+    "docs/apms-failsafe-function.rst:214-250"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "Short Failsafe наступает через 0.5 секунды RC failsafe",
+      "terms": [
+       "0.5"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "действие задаёт FS_SHORT_ACTN",
+      "terms": [
+       "FS_SHORT_ACTN"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "по умолчанию режим CIRCLE",
+      "terms": [
+       "CIRCLE"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "Short Failsafe наступает через 0.5 секунды RC failsafe",
+      "present": true
+     },
+     {
+      "fact": "действие задаёт FS_SHORT_ACTN",
+      "present": true
+     },
+     {
+      "fact": "по умолчанию режим CIRCLE",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer gives all three key facts: the 0.5 s delay, FS_SHORT_ACTN and the default CIRCLE mode. Its extra details (value 0, Long Failsafe with RTL) don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-03",
+   "answerable": true,
+   "question": "Что происходит, если потеря RC-сигнала длится дольше, чем Short Failsafe, и вернётся ли прежний режим после восстановления связи?",
+   "answer": "Если потеря RC-сигнала длится дольше, чем время Short Failsafe (по умолчанию 0.5 секунды), и превышает порог Long Failsafe (параметр `FS_LONG_TIMEOUT`), происходит следующее:\n\n1. **Переход в Long Failsafe:** Автопилот переходит из состояния Short Failsafe (обычно это режим CIRCLE — кружение) в состояние **Long Failsafe**.\n2. **Выполнение действия:** Выполняется действие, заданное параметром `FS_LONG_ACTN`. По умолчанию это **RTL** (Return to Launch — возврат на точку взлёта).\n\n### Вернётся ли прежний режим после восстановления связи?\n\n**Нет, прежний режим не вернётся автоматически.**\n\n*   После выхода из состояния Long Failsafe (если связь восстановилась) бортовой компьютер выведет сообщение о том, что Long Failsafe отключен.\n*   Однако **режим полёта не переключится обратно** на тот, который был до потери сигнала.\n*   Чтобы вернуть ручное управление или изменить режим, пилоту необходимо будет вручную переключить режим через передатчик (если связь восстановлена) или через GCS.\n\n> **Важное уточнение:** Если вы успели переключить режим на пульте *во время* потери сигнала (но до её завершения), то после восстановления связи вступит в силу именно тот режим, который был установлен на пульте в момент восстановления связи. Но автоматического возврата к \"старому\" режиму не происходит [3].\n\nSources:\n[3] docs/apms-failsafe-function.rst:64-75",
+   "error": null,
+   "seconds": 14.0,
+   "tool_calls": 2,
+   "usage": {
+    "input": 6243,
+    "output": 540,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/apms-failsafe-function.rst:64-75"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "Long Failsafe наступает после FS_LONG_TIMEOUT секунд",
+      "terms": [
+       "FS_LONG_TIMEOUT"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "действие задаёт FS_LONG_ACTN, по умолчанию RTL",
+      "terms": [
+       "FS_LONG_ACTN",
+       "RTL"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "после восстановления сигнала режим не возвращается автоматически",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "Long Failsafe наступает после FS_LONG_TIMEOUT секунд",
+      "present": true
+     },
+     {
+      "fact": "действие задаёт FS_LONG_ACTN, по умолчанию RTL",
+      "present": true
+     },
+     {
+      "fact": "после восстановления сигнала режим не возвращается автоматически",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer includes all three key facts (FS_LONG_TIMEOUT, FS_LONG_ACTN defaulting to RTL, and no automatic return to the earlier mode), and nothing it says contradicts the reference; extra details such as the 0.5 s Short Failsafe default aren't in the reference, so I couldn't check them."
+   }
+  },
+  {
+   "id": "docs-04",
+   "answerable": true,
+   "question": "Как лучше настроить приёмник на случай потери связи: отправлять заданное значение газа или что-то другое?",
+   "answer": "Согласно документации, для настройки приемника при потере связи лучше всего выбрать режим отправки **\"no pulses\" (отсутствие импульсов)** [8].\n\nВот подробности и альтернативные варианты:\n\n**1. Оптимальный вариант: \"No pulses\"**\nНастройка приемника на отправку отсутствия импульсов является предпочтительной [8].\n*   **Почему это лучше:** Это позволяет автопилоту четко зафиксировать потерю связи (по таймауту `RC_FS_TIMEOUT`), не получая ложных данных о положении каналов.\n\n**2. Почему НЕ стоит отправлять заданное значение газа (Throttle)**\nОтправка приемником предустановленного значения канала газа при потере связи **не рекомендуется** [8].\n*   **Причина:** Это может привести к конфликтам с другими системами безопасности, особенно если настроен failsafe по батарее (например, в QuadPlanes), когда автопилот пытается выполнить посадку, а приемник в это время шлет команды на газ.\n\n**3. Что делать со старыми приемниками?**\nМногие старые модели приемников не умеют отправлять \"no pulses\". В таких случаях они обычно либо удерживают последнее значение каналов, либо устанавливают канал газа в **минимум (минимальный PWM)** [10].\n*   Если ваш приемник устанавливает газ в минимум: вам нужно настроить параметр автопилота `THR_FS_VALUE` (порог срабатывания по газу) так, чтобы минимальное значение от приемника было ниже этого порога [8].\n*   При этом штатный диапазон газа на пульте должен быть настроен выше этого значения (обычно это делается через trim или настройки пульта), чтобы автопилот отличал \"нормальный\" малый газ от сигнала failsafe [8].\n*   Для работы срабатывания по газу в автопилоте также должен быть включен параметр `THR_FAILSAFE` (должен быть равен 1) [11].\n\n**Резюме:** Если ваш приемник позволяет, настройте его на **no pulses**. Если нет — используйте режим установки газа в **минимум** и подстройте порог `THR_FS_VALUE` в автопилоте.\n\nSources:\n[8] docs/apms-failsafe-function.rst:48-63\n[10] docs/apms-failsafe-function.rst:87-98\n[11] docs/apms-failsafe-function.rst:31-47",
+   "error": null,
+   "seconds": 43.3,
+   "tool_calls": 2,
+   "usage": {
+    "input": 7705,
+    "output": 2641,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/apms-failsafe-function.rst:48-63",
+    "docs/apms-failsafe-function.rst:87-98",
+    "docs/apms-failsafe-function.rst:31-47"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": [
+     {
+      "fact": "предпочтителен режим no pulses",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "заданное значение газа при потере связи не рекомендуется",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "предустановленный газ подходит только для старых приёмников, которые не умеют no pulses",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "предпочтителен режим no pulses",
+      "present": true
+     },
+     {
+      "fact": "заданное значение газа при потере связи не рекомендуется",
+      "present": true
+     },
+     {
+      "fact": "предустановленный газ подходит только для старых приёмников, которые не умеют no pulses",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer recommends no pulses, advises against sending a preset throttle value (it mentions the QuadPlane battery failsafe conflict), and offers a low-throttle failsafe only for old receivers."
+   }
+  },
+  {
+   "id": "docs-05",
+   "answerable": true,
+   "question": "Какими способами можно прервать автоматическую посадку?",
+   "answer": "Для успешного прерывания автоматической посадки необходимо, чтобы дрон находился в режиме **AUTO** и выполнял миссионный пункт `NAV_LAND` (или находился в специальном режиме AUTOLAND) [2]. \n\nСуществует три основных способа инициировать прерывание:\n\n1. **Команда через наземную станцию (GCS):** \n   Отправка специальной команды `MAV_CMD_DO_GO_AROUND`. Например, в программе Mission Planner на вкладке FlightData Actions есть кнопка «Abort Landing» [2].\n\n2. **Подача газа с пульта управления (RC):**\n   Если подать газ (Throttle) более 90%, это вызовет прерывание посадки, при этом дрон останется в режиме AUTO [2]. Газ нужно подать кратко для срабатывания, а затем снизить обратно [2].\n\n3. **Смена режима полета:**\n   Переключение из режима AUTO на ручной (например, MANUAL, STABILIZE или FBWA) позволяет пилоту взять управление на себя и безопасно управлять самолетом вручную. При возврате в режим AUTO миссия продолжится с учетом изменений [2]. Если дрон находится в режиме AUTOLAND, выход из него также прервет посадку [5].\n\n**Что произойдет после срабатывания прерывания:**\nЕсли abort был вызван не ручной сменой режима, по умолчанию сработает автоматическая процедура: дрон поднимет нос минимум на 10 градусов, установит максимальную тягу и удержит курс до достижения целевой высоты (по умолчанию 30 метров) [3].\n\nSources:\n[2] docs/aborting-autolanding.rst:17-26\n[5] docs/mode_autoland.rst:38-45\n[3] docs/aborting-autolanding.rst:27-37",
+   "error": null,
+   "seconds": 17.9,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3329,
+    "output": 1174,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/aborting-autolanding.rst:17-26",
+    "docs/mode_autoland.rst:38-45",
+    "docs/aborting-autolanding.rst:27-37"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 5,
+    "total": 5,
+    "facts": [
+     {
+      "fact": "работает только в AUTO при выполнении NAV_LAND",
+      "terms": [
+       "NAV_LAND",
+       "AUTO"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "команда MAV_CMD_DO_GO_AROUND с наземной станции (кнопка Abort Landing)",
+      "terms": [
+       "MAV_CMD_DO_GO_AROUND"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "газ RC выше 90%",
+      "terms": [
+       "90"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "смена режима из AUTO",
+      "terms": [
+       "AUTO"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "работает только в AUTO при выполнении NAV_LAND",
+      "present": true
+     },
+     {
+      "fact": "команда MAV_CMD_DO_GO_AROUND с наземной станции (кнопка Abort Landing)",
+      "present": true
+     },
+     {
+      "fact": "газ RC выше 90%",
+      "present": true
+     },
+     {
+      "fact": "смена режима из AUTO",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer has all four key facts with the right identifiers. Its added AUTOLAND-mode details look like extra content from other sources, not a contradiction, though they sit loosely with the reference's \"only in AUTO\" wording."
+   }
+  },
+  {
+   "id": "docs-06",
+   "answerable": true,
+   "question": "What does the plane do by default after an auto-landing abort is triggered?",
+   "answer": "By default, after an auto-landing abort is triggered (specifically via an automatic trigger like a MAV_CMD_DO_GO_AROUND or high RC throttle input), the plane simulates an **auto-takeoff** [1]. \n\nThe specific default actions include:\n*   **Pitching up** by at least 10 degrees.\n*   Setting the throttle to the maximum takeoff throttle value (`TKOFF_THR_MAX`).\n*   Holding the current heading until it reaches a target altitude of 30 meters [1].\n\nThis behavior can be customized with parameters (such as minimum pitch and target altitude) if a `NAV_TAKEOFF` or `NAV_LAND` command was previously used in the mission, but otherwise follows these standard settings [1].\n\n*Note: If the abort is triggered by manually switching out of AUTO mode to something like MANUAL or STABILIZE, this automatic step 2 is skipped because the pilot is assumed to be flying the aircraft to safety [1].*\n\nSources:\n[1] docs/aborting-autolanding.rst:27-37",
+   "error": null,
+   "seconds": 9.4,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3014,
+    "output": 490,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/aborting-autolanding.rst:27-37"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "behaves like an auto-takeoff",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "pitch up at least 10 degrees",
+      "terms": [
+       "10"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "throttle set to TKOFF_THR_MAX",
+      "terms": [
+       "TKOFF_THR_MAX"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "climbs holding heading to 30 m",
+      "terms": [
+       "30"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "behaves like an auto-takeoff",
+      "present": true
+     },
+     {
+      "fact": "pitch up at least 10 degrees",
+      "present": true
+     },
+     {
+      "fact": "throttle set to TKOFF_THR_MAX",
+      "present": true
+     },
+     {
+      "fact": "climbs holding heading to 30 m",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer states all four key facts with the right values, and its extra details don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-07",
+   "answerable": true,
+   "question": "Как настроить арминг и дизарминг рулём направления?",
+   "answer": "Для настройки арминга и дизарминга с помощью руля направления в ArduPlane необходимо изменить параметр **`ARMING_RUDDER`** и правильно откалибровать пульт [1][2].\n\nВот пошаговая инструкция:\n\n### 1. Настройка параметра `ARMING_RUDDER`\nЭтот параметр определяет, разрешено ли управление двигателями с помощью руля:\n*   **Установите значение 1** (по умолчанию): разрешает только арминг (включение двигателей) правым креном руля [1].\n*   **Установите значение 2**: разрешает как арминг, так и дизарминг (отключение двигателей) с помощью руля направления [1][2].\n\n### 2. Как выполнять действия стиками\nПосле настройки параметра физические манипуляции выглядят следующим образом:\n*   **Арминг:** Зажмите Stick руля направления (Rudder) полностью вправо и Stick газа (Throttle) полностью вниз на **3 секунды** [3].\n*   **Дизарминг:** Удерживайте Stick газа на минимуме и Stick руля направления полностью влево в течение **2 секунд** (работает только если `ARMING_RUDDER` = 2) [2].\n\n### 3. Важные требования\n*   **Датчик воздушной скорости:** Для корректного дизарминга рулем необходим подключенный и настроенный датчик воздуха (airspeed sensor). Автопилит использует его показания, чтобы убедиться, что самолет находится на земле, а не летит [2]. Если на земле сильный ветер, показания могут быть высокими, и дизарминг не произойдет.\n*   **Калибровка пульта:** Крайне важно правильно откалибровать RC-передатчик. Минимальное значение газа (`RC3_MIN`) должно соответствовать значению при обычном управлении полетом, а не значению аварийного выключения (failsafe). Если калибровка неверна, автопилит будет видеть ненулевой газ и откажется давать команду на арминг [6].\n\n### ⚠️ Предупреждение о безопасности\nПри установленном значении `ARMING_RUDDER` = 2 есть риск случайного дизарминга во время полета. Если автопилит ошибочно решит, что самолет находится на земле (например, из-за сбоя датчика воздушной скорости), удержание руля влево отключит двигатели в любом режиме [1][2].\n\nSources:\n[1] docs/arming-your-plane.rst:33-53\n[2] docs/arming-your-plane.rst:95-124\n[3] docs/arming-your-plane.rst:74-94\n[6] docs/arming-your-plane.rst:54-73",
+   "error": null,
+   "seconds": 31.7,
+   "tool_calls": 2,
+   "usage": {
+    "input": 6154,
+    "output": 1885,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/arming-your-plane.rst:33-53",
+    "docs/arming-your-plane.rst:95-124",
+    "docs/arming-your-plane.rst:74-94",
+    "docs/arming-your-plane.rst:54-73"
+   ],
+   "citation_hit": true,
+   "fact_recall": 0.8,
+   "exact": {
+    "found": 4,
+    "total": 5,
+    "facts": [
+     {
+      "fact": "параметр ARMING_RUDDER",
+      "terms": [
+       "ARMING_RUDDER"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "1 по умолчанию: арминг правым рулём",
+      "terms": [
+       "1"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "2: дизарминг левым рулём",
+      "terms": [
+       "2"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "0: только GCS или RC-переключатель",
+      "terms": [
+       "0"
+      ],
+      "missing": [
+       "0"
+      ]
+     },
+     {
+      "fact": "предупреждение: при 2 возможен дизарм в любом режиме",
+      "terms": [
+       "2"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "параметр ARMING_RUDDER",
+      "present": true
+     },
+     {
+      "fact": "1 по умолчанию: арминг правым рулём",
+      "present": true
+     },
+     {
+      "fact": "2: дизарминг левым рулём",
+      "present": true
+     },
+     {
+      "fact": "0: только GCS или RC-переключатель",
+      "present": false
+     },
+     {
+      "fact": "предупреждение: при 2 возможен дизарм в любом режиме",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "partial",
+    "comment": "Ответ верно описывает значения 1 и 2 и предупреждение, но не упоминает значение 0 (только GCS/RC-переключатель)."
+   }
+  },
+  {
+   "id": "docs-08",
+   "answerable": true,
+   "question": "What does ARMING_REQUIRE control and what is its default?",
+   "answer": "The **ARMING_REQUIRE** parameter controls two main aspects of the aircraft's arming behavior:\n\n*   **Arming Requirement:** It determines whether an explicit arming step is required before takeoff. The default value is **1**, which means arming is required. If set to 0, arming is not required (the plane starts off armed) [1].\n*   **Throttle Behavior when Disarmed:** It dictates what happens to the throttle output while the aircraft is disarmed:\n    *   **Value 1 (Default):** The minimum value for the throttle channel is sent to the motor.\n    *   **Value 2:** No pulses are sent to the throttle channel [2].\n\n**Default Value:** 1 [1]\n\nSources:\n[1] docs/arming-your-plane.rst:33-53\n[2] docs/arming-your-plane.rst:125-156",
+   "error": null,
+   "seconds": 11.1,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3844,
+    "output": 562,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/arming-your-plane.rst:33-53",
+    "docs/arming-your-plane.rst:125-156"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 2,
+    "total": 2,
+    "facts": [
+     {
+      "fact": "controls whether arming is required",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "default is 1 (arming required)",
+      "terms": [
+       "1"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "0 means the plane starts armed",
+      "terms": [
+       "0"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "controls whether arming is required",
+      "present": true
+     },
+     {
+      "fact": "default is 1 (arming required)",
+      "present": true
+     },
+     {
+      "fact": "0 means the plane starts armed",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer has all three key facts. The extra details about throttle behavior while disarmed don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-09",
+   "answerable": true,
+   "question": "Как включить автоматическую подстройку трима в полёте и какое у неё условие?",
+   "answer": "Для включения автоматической подстройки трима в полёте необходимо установить параметр **SERVO_AUTO_TRIM = 1** [1].\n\nСистема будет постоянно контролировать необходимые корректировки для поддержания горизонтального полета и каждые 10 секунд обновлять значения трима (`SERVOx_TRIM`) для поверхностей, управляющих креном и тангажом (например, элеронами или элеваторами) [1].\n\n**Условия, при которых происходит обновление трима:**\n*   **Отсутствие ввода пилота:** Самолетом должен управлять исключительно автопилот.\n*   **Горизонтальный полет:** Самолет должен находиться в приблизительно горизонтальном положении.\n*   **Скорость:** Скорость самолета относительно земли должна превышать **8 м/с** [1].\n*   **Данные GPS:** Система AHRS должна иметь оценку скорости относительно земли (обычно поступающую от GPS) [1].\n\n**Ограничения:**\n*   Автоматическая подстройка работает только в диапазоне, составляющем примерно 20% от полного диапазона `SERVOx_MAX/MIN`. Если трим смещен слишком сильно механически, система не сможет его скорректировать — потребуется ручная механическая настройка [1].\n*   Эта функция компенсирует лишь небольшие ошибки и не заменяет правильное расположение центра тяжести (CG) самолета [1].\n\nSources:\n[1] docs/auto-trim.rst:10-27",
+   "error": null,
+   "seconds": 33.4,
+   "tool_calls": 2,
+   "usage": {
+    "input": 4977,
+    "output": 2103,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/auto-trim.rst:10-27"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "SERVO_AUTO_TRIM = 1",
+      "terms": [
+       "SERVO_AUTO_TRIM",
+       "1"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "подстраивает трим по крену и тангажу",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "требуется оценка путевой скорости (GPS)",
+      "terms": [
+       "GPS"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "SERVO_AUTO_TRIM = 1",
+      "present": true
+     },
+     {
+      "fact": "подстраивает трим по крену и тангажу",
+      "present": true
+     },
+     {
+      "fact": "требуется оценка путевой скорости (GPS)",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts. It also adds details that don't conflict with the reference: the 10-second update interval, the 8 m/s speed threshold and the roughly 20% trim range limit."
+   }
+  },
+  {
+   "id": "docs-10",
+   "answerable": true,
+   "question": "Какие скорости вращения по умолчанию в режиме ACRO и стабилизируется ли рыскание?",
+   "answer": "В режиме ACRO скорости вращения по умолчанию и стабилизация рыскания работают следующим образом:\n\n*   **Скорости вращения:**\n    *   По умолчанию максимальная скорость крена (`ACRO_ROLL_RATE`) и тангажа (`ACRO_PITCH_RATE`) установлена в **180 градусов в секунду** [1].\n    *   Скорость рыскания (`ACRO_YAW_RATE`) по умолчанию равна **0**, что означает отсутствие ограничений (безлимитное вращение) [1].\n\n*   **Стабилизация рыскания:**\n    *   Стабилизация скорости вращения по оси рыскания (yaw) **не включена по умолчанию** [1].\n    *   Чтобы активировать ее, необходимо вручную установить параметр `YAW_RATE_ENABLE` в значение **1** [1].\n\nЕсли стабилизация рыскания включена, пилоту придется использовать руль направления (рудер), чтобы совершить чистый разворот, так как одного только отклонения элеронов будет недостаточно [5].\n\nSources:\n[1] docs/acro-mode.rst:3-21\n[5] docs/acro-mode.rst:81-90",
+   "error": null,
+   "seconds": 14.3,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3687,
+    "output": 848,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/acro-mode.rst:3-21",
+    "docs/acro-mode.rst:81-90"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 7,
+    "total": 7,
+    "facts": [
+     {
+      "fact": "ACRO_ROLL_RATE и ACRO_PITCH_RATE по умолчанию 180 град/с",
+      "terms": [
+       "ACRO_ROLL_RATE",
+       "ACRO_PITCH_RATE",
+       "180"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "ACRO_YAW_RATE по умолчанию 0",
+      "terms": [
+       "ACRO_YAW_RATE",
+       "0"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "стабилизация рыскания по умолчанию выключена, YAW_RATE_ENABLE = 1",
+      "terms": [
+       "YAW_RATE_ENABLE",
+       "1"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "ACRO_ROLL_RATE и ACRO_PITCH_RATE по умолчанию 180 град/с",
+      "present": true
+     },
+     {
+      "fact": "ACRO_YAW_RATE по умолчанию 0",
+      "present": true
+     },
+     {
+      "fact": "стабилизация рыскания по умолчанию выключена, YAW_RATE_ENABLE = 1",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "Ответ содержит все три ключевых факта с правильными значениями и названиями параметров и ничем не противоречит эталону."
+   }
+  },
+  {
+   "id": "docs-11",
+   "answerable": true,
+   "question": "What should ARSPD_TYPE be set to if no airspeed sensor is installed, and what airspeed is used then?",
+   "answer": "If no airspeed sensor is installed, **ARSPD_TYPE** should be set to **0** [2], [3].\n\nIn this configuration, ArduPilot uses a calculated **sensor-less airspeed estimate** [2]. This synthetic estimate is derived from other available inputs, such as GPS velocity, position changes, and IMU accelerations [3]. It is used for speed scaling of the PID loops to ensure stabilization gains are appropriate even without physical airspeed data [3].\n\nSources:\n[2] docs/airspeed.rst:26-40\n[3] docs/airspeed-parameters-setup.rst:1-19",
+   "error": null,
+   "seconds": 8.9,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3661,
+    "output": 427,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/airspeed.rst:26-40",
+    "docs/airspeed-parameters-setup.rst:1-19"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "ARSPD_TYPE = 0",
+      "terms": [
+       "ARSPD_TYPE",
+       "0"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "ArduPilot uses a sensor-less airspeed estimate",
+      "terms": [
+       "ArduPilot"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "ARSPD_TYPE = 0",
+      "present": true
+     },
+     {
+      "fact": "ArduPilot uses a sensor-less airspeed estimate",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer has both key facts, and its extra details don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-12",
+   "answerable": true,
+   "question": "Почему датчик воздушной скорости рекомендуют закрывать от света?",
+   "answer": "Датчик воздушной скорости рекомендуют закрывать от света, потому что многие из них **чувствительны к свету** [5].\n\nЕсли датчик подвергается воздействию света, это может привести к **ошибкам в измерениях** (measurement errors) [5]. Поэтому, если вы не уверены на 100%, что конкретный используемый вами датчик защищен от такого влияния, его необходимо экранировать от света во время работы [5].\n\nSources:\n[5] docs/airspeed.rst:26-40",
+   "error": null,
+   "seconds": 11.9,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3701,
+    "output": 660,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/airspeed.rst:26-40"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": [
+     {
+      "fact": "многие датчики чувствительны к свету",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "свет вызывает ошибки измерения",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "многие датчики чувствительны к свету",
+      "present": true
+     },
+     {
+      "fact": "свет вызывает ошибки измерения",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "Ответ содержит оба ключевых факта (многие датчики чувствительны к свету, свет вызывает ошибки измерения) и ничем не противоречит эталону."
+   }
+  },
+  {
+   "id": "docs-13",
+   "answerable": true,
+   "question": "Зачем нужен режим CIRCLE и почему у него такой большой радиус?",
+   "answer": "Режим **CIRCLE** (круговая циркуляция) предназначен в первую очередь как **начальный режим при потере связи** (failsafe) [1]. Его главная цель — заставить самолет плавно повернуть, чтобы у пилота была возможность восстановить радиосигнал и снова перехватить управление. В отличие от режима LOITER, он не пытается удерживать точную точку в пространстве [1].\n\nБольшой радиус циркуляции обусловлен тем, что этот режим является **предельно консервативным** и используется в ситуациях, когда сигнал GPS теряется или становится ненадежным [1]. Чтобы самолет оставался стабильным даже без данных о скорости по GPS (которые обычно нужны для коррекции акселерометра), угол крена искусственно ограничивается значением параметра `ROLL_LIMIT_DEG`, деленным на 3 [1]. Именно из-за такого малого угла крена и получается такой широкий радиус разворота [1].\n\nSources:\n[1] docs/circle-mode.rst:1-20",
+   "error": null,
+   "seconds": 22.9,
+   "tool_calls": 2,
+   "usage": {
+    "input": 5771,
+    "output": 1189,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/circle-mode.rst:1-20"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 3,
+    "total": 3,
+    "facts": [
+     {
+      "fact": "используется как начальный failsafe-режим для восстановления связи",
+      "terms": [],
+      "missing": []
+     },
+     {
+      "fact": "не держит позицию и не зависит от GPS",
+      "terms": [
+       "GPS"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "крен ограничен ROLL_LIMIT_DEG / 3, поэтому радиус большой",
+      "terms": [
+       "ROLL_LIMIT_DEG",
+       "3"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "используется как начальный failsafe-режим для восстановления связи",
+      "present": true
+     },
+     {
+      "fact": "не держит позицию и не зависит от GPS",
+      "present": true
+     },
+     {
+      "fact": "крен ограничен ROLL_LIMIT_DEG / 3, поэтому радиус большой",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts: it is the initial failsafe mode, it does not hold position and works without GPS, and roll is limited to ROLL_LIMIT_DEG/3, which gives the large radius; its extra details don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-14",
+   "answerable": true,
+   "question": "Как ограничивается крен при автоматическом взлёте?",
+   "answer": "При автоматическом взлёте крен ограничивается для предотвращения задевания крыльев о землю (особенно при взлёте с полосы) с помощью параметра **`LEVEL_ROLL_LIMIT`** [[1]].\n\nМеханизм ограничения работает следующим образом:\n\n1.  **Первая фаза:** До достижения высоты **`TKOFF_LVL_ALT`** (по умолчанию 10 метров) крылья удерживаются на уровне в пределах значения `LEVEL_ROLL_LIMIT` [[1]].\n2.  **Промежуточная фаза:** После прохождения отметки в 10 метров система постепенно начинает допускать больший крен [[1]].\n3.  **Полный крен:** Когда высота достигает **3x `TKOFF_LVL_ALT`** (по умолчанию 30 метров), ограничитель снимается, и разрешается использование нормального лимита крена, заданного параметром **`ROLL_LIMIT_DEG`** [[1]].\n\nТаким образом, на малых высотах во время взлёта автопилот строго контролирует крен в пределах `LEVEL_ROLL_LIMIT`, а по мере набора высоты плавно переходит к обычным значениям навигации.\n\nSources:\n[1] docs/automatic-takeoff.rst:11-43",
+   "error": null,
+   "seconds": 13.1,
+   "tool_calls": 2,
+   "usage": {
+    "input": 6412,
+    "output": 466,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/automatic-takeoff.rst:11-43"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 6,
+    "total": 6,
+    "facts": [
+     {
+      "fact": "крен ограничен LEVEL_ROLL_LIMIT",
+      "terms": [
+       "LEVEL_ROLL_LIMIT"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "до высоты TKOFF_LVL_ALT, по умолчанию 10 м",
+      "terms": [
+       "TKOFF_LVL_ALT",
+       "10"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "полный ROLL_LIMIT_DEG разрешается на 3 x TKOFF_LVL_ALT",
+      "terms": [
+       "ROLL_LIMIT_DEG",
+       "TKOFF_LVL_ALT",
+       "3"
+      ],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "крен ограничен LEVEL_ROLL_LIMIT",
+      "present": true
+     },
+     {
+      "fact": "до высоты TKOFF_LVL_ALT, по умолчанию 10 м",
+      "present": true
+     },
+     {
+      "fact": "полный ROLL_LIMIT_DEG разрешается на 3 x TKOFF_LVL_ALT",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "Ответ содержит все три ключевых факта с правильными параметрами и значениями и ничем не противоречит эталону."
+   }
+  },
+  {
+   "id": "docs-15",
+   "answerable": true,
+   "question": "How do I set up automatic flaps that deploy based on speed?",
+   "answer": "To set up automatic flaps that deploy based on speed, follow these configuration steps:\n\n### 1. Assign the Flap Channel Function\nSet the `SERVOx_FUNCTION` parameter (where `x` is your desired flap channel, e.g., `SERVO5_FUNCTION`) to **3** [4]. This assigns the \"Flap_auto\" output function to that channel [5].\n\n### 2. Configure Speed and Percentage Parameters\nDefine the two speeds at which flaps will deploy and their corresponding positions using these parameters:\n*   **FLAP_1_SPEED**: The airspeed threshold for the first flap setting.\n*   **FLAP_1_PERCNT**: The percentage of flap deployment for the first setting.\n*   **FLAP_2_SPEED**: The airspeed threshold for the second flap setting.\n*   **FLAP_2_PERCNT**: The percentage of flap deployment for the second setting [4].\n\n### 3. Recalibrate Radio\nPerform a radio calibration with your transmitter's flap switch in the **zero flaps** position to ensure the trim is stored correctly [4].\n\n### 4. Adjust Reversing (If Necessary)\nIf the flaps move in the opposite direction of what you expect, set the reversing parameter for that channel (e.g., `SERVO5_REVERSED`) to **1**. Set it to **0** for normal operation [4].\n\n### 5. Select Control Logic via FLIGHT_OPTIONS\nThe behavior of automatic flaps depends on bit 15 of the `FLIGHT_OPTIONS` parameter:\n*   **Bit 15 Clear (Default):** Flap deployment is based on **target speed**. If the target speed drops below `FLAP_1_SPEED`, flaps deploy to position 1; if it drops below `FLAP_2_SPEED`, they deploy to position 2 [1]. This logic applies in manual throttle modes and autonomous flight [1].\n*   **Bit 15 Set:** Flap deployment uses **actual airspeed** (in manual throttle modes) or the minimum of target and actual speed (in auto-throttle modes). This allows flaps to deploy if airspeed drops unexpectedly, though it requires careful testing to avoid oscillation [3].\n\n### Optional: Automatic Takeoff/Landing\nYou can set specific flap positions for autonomous takeoffs and landings using these parameters:\n*   **TKOFF_FLAP_PCNT**: Flap percentage for takeoff.\n*   **LAND_FLAP_PERCNT**: Flap percentage for landing [4].\n\nSources:\n[4] docs/automatic-flaps.rst:34-59\n[5] docs/channel-output-functions.rst:124-155\n[1] docs/automatic-flaps.rst:1-24\n[3] docs/automatic-flaps.rst:25-33",
+   "error": null,
+   "seconds": 32.3,
+   "tool_calls": 1,
+   "usage": {
+    "input": 3623,
+    "output": 2244,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/automatic-flaps.rst:34-59",
+    "docs/channel-output-functions.rst:124-155",
+    "docs/automatic-flaps.rst:1-24",
+    "docs/automatic-flaps.rst:25-33"
+   ],
+   "citation_hit": true,
+   "fact_recall": 1.0,
+   "exact": {
+    "found": 6,
+    "total": 6,
+    "facts": [
+     {
+      "fact": "SERVOx_FUNCTION of the flap channel = 3",
+      "terms": [
+       "SERVOx_FUNCTION",
+       "3"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "FLAP_1_PERCNT, FLAP_1_SPEED, FLAP_2_PERCNT, FLAP_2_SPEED",
+      "terms": [
+       "FLAP_1_PERCNT",
+       "FLAP_1_SPEED",
+       "FLAP_2_PERCNT",
+       "FLAP_2_SPEED"
+      ],
+      "missing": []
+     },
+     {
+      "fact": "redo radio calibration with flaps at zero",
+      "terms": [],
+      "missing": []
+     }
+    ]
+   },
+   "grade": {
+    "facts": [
+     {
+      "fact": "SERVOx_FUNCTION of the flap channel = 3",
+      "present": true
+     },
+     {
+      "fact": "FLAP_1_PERCNT, FLAP_1_SPEED, FLAP_2_PERCNT, FLAP_2_SPEED",
+      "present": true
+     },
+     {
+      "fact": "redo radio calibration with flaps at zero",
+      "present": true
+     }
+    ],
+    "contradictions": [],
+    "refused": false,
+    "verdict": "correct",
+    "comment": "The answer covers all three key facts. Its extra details, such as the FLIGHT_OPTIONS bit and the reversing settings, don't contradict the reference."
+   }
+  },
+  {
+   "id": "docs-u1",
+   "answerable": false,
+   "question": "Как настроить PID-регуляторы в Betaflight для гоночного квадрокоптера?",
+   "answer": "К сожалению, в предоставленной базе знаний нет информации о **Betaflight**. \n\nДокументация содержит руководство по настройке PID-регуляторов для прошивки **ArduPilot** (в частности, для QuadPlane и Plane) [1, 2, 4]. ArduPilot и Betaflight — это две разные системы полетных контроллеров с совершенно разными интерфейсами настройки и параметрами.\n\nТак как база знаний не покрывает вопросы по Betaflight, я не могу предоставить конкретные инструкции по настройке PID в этой прошивке на основе доступных источников.\n\nRetrieved (not cited):\n- docs/qautotune-mode.rst:1-16\n- docs/quadplane-vtol-tuning-process.rst:97-131\n- docs/quadplane-vtol-tuning.rst:74-109\n- docs/quadplane-vtol-tuning.rst:1-26\n- docs/tailsitter-tuning-guide.rst:13-44\n- docs/quadplane-vtol-tuning.rst:27-32\n- docs/fpv-plane.rst:185-204\n- docs/introduction.rst:3-43\n- docs/starting-up-and-calibrating-arduplane.rst:71-108\n- docs/case-study-fly-by-wire.rst:1-27\n- docs/fpv-plane.rst:22-40\n- docs/fpv-plane.rst:1-21",
+   "error": null,
+   "seconds": 17.4,
+   "tool_calls": 2,
+   "usage": {
+    "input": 10027,
+    "output": 695,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 3,
+    "cost_usd": null
+   },
+   "cited": [],
+   "citation_hit": null,
+   "fact_recall": null,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": []
+   },
+   "grade": {
+    "facts": [],
+    "contradictions": [],
+    "refused": true,
+    "verdict": "correct",
+    "comment": "The answer says correctly that the knowledge base has nothing on Betaflight, notes that it only covers ArduPilot, and doesn't make up any tuning instructions."
+   }
+  },
+  {
+   "id": "docs-u2",
+   "answerable": false,
+   "question": "Сколько стоит автопилот Pixhawk 6X?",
+   "answer": "В предоставленных документах нет информации о стоимости автопилота Pixhawk 6X [1-6].\n\nRetrieved (not cited):\n- docs/project-news.rst:29-51\n- docs/mocking-an-airspeed-sensor-for-bench-testing.rst:32-59\n- docs/arming-your-plane.rst:229-249\n- docs/fpv-plane.rst:41-66\n- docs/analog-airspeed-sensors.rst:15-78\n- docs/qloiter-mode.rst:15-30",
+   "error": null,
+   "seconds": 9.1,
+   "tool_calls": 1,
+   "usage": {
+    "input": 4309,
+    "output": 401,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 2,
+    "cost_usd": null
+   },
+   "cited": [],
+   "citation_hit": null,
+   "fact_recall": null,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": []
+   },
+   "grade": {
+    "facts": [],
+    "contradictions": [],
+    "refused": true,
+    "verdict": "correct",
+    "comment": "The answer correctly says the documents have no Pixhawk 6X price and doesn't guess one."
+   }
+  },
+  {
+   "id": "docs-u3",
+   "answerable": false,
+   "question": "Какая версия Python нужна для сборки прошивки ArduPilot из исходников?",
+   "answer": "Согласно предоставленным материалам, для самостоятельной сборки прошивки ArduPilot из исходников используется встроенная система сборки **waf** [5]. В доступных фрагментах документации конкретная версия Python не указана.\n\nSources:\n[5] docs/airframe-disco.rst:1-48",
+   "error": null,
+   "seconds": 89.7,
+   "tool_calls": 9,
+   "usage": {
+    "input": 87682,
+    "output": 3412,
+    "cache_read": 0,
+    "cache_write": 0,
+    "calls": 8,
+    "cost_usd": null
+   },
+   "cited": [
+    "docs/airframe-disco.rst:1-48"
+   ],
+   "citation_hit": null,
+   "fact_recall": null,
+   "exact": {
+    "found": 0,
+    "total": 0,
+    "facts": []
+   },
+   "grade": {
+    "facts": [],
+    "contradictions": [],
+    "refused": true,
+    "verdict": "correct",
+    "comment": "The answer says the docs don't specify a Python version and doesn't make one up; the waf mention is cited extra context, not a guess."
+   }
+  }
+ ]
+}

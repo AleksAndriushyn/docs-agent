@@ -40,7 +40,9 @@ Rules:
 - Results of rag_search and read_file start with a number like [3]. Put that number right
   after each claim it supports, e.g. "THR_FS_VALUE defaults to 950 [3]." Write only [n]:
   no file paths, no URLs. The list of sources is appended automatically.
-- If nothing answers the question, say so.
+- Know when to stop: if 2-3 differently phrased searches found nothing relevant, the
+  knowledge base doesn't cover the question. Say so plainly instead of trying more
+  unrelated queries.
 - Answer in the user's language."""
 
 SYSTEM_NO_FOLDER = SYSTEM.replace(

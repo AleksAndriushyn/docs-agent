@@ -16,6 +16,14 @@ from core.tools import Tool, call_tool
 # Opus 5.5 always thinks; a small cap would cut answers mid-thought. Streaming avoids timeouts.
 ANTHROPIC_MAX_TOKENS = 32000
 
+# Sent only with the last allowed step (not kept in history), together with tools switched off,
+# so a model that keeps searching still ends with an answer instead of an empty "gave up".
+FINAL_STEP_NOTE = ("Tool budget exhausted. Answer now using only the tool results above. "
+                   "If they don't contain the answer, say that the information was not found.")
+# Thinking models sometimes stop after reasoning with an empty reply: ask once more, without tools.
+EMPTY_ANSWER_NOTE = ("Your last reply was empty. Write the final answer now using the tool results "
+                     "above. If they don't contain the answer, say that the information was not found.")
+
 
 @dataclass
 class LLM:
@@ -37,12 +45,15 @@ def run_loop(llm: LLM, system: str, tools: list[Tool], messages: list, out: Cons
     """Runs until the model answers without tool calls. Mutates `messages` (history)."""
     step = _step_anthropic if llm.provider == "anthropic" else _step_openai
     registry = {t.name: t for t in tools}
-    for _ in range(MAX_STEPS):
-        answer = step(llm, system, registry, messages, out)
+    for i in range(MAX_STEPS):
+        answer = step(llm, system, registry, messages, out,
+                      note=FINAL_STEP_NOTE if i == MAX_STEPS - 1 else None)
+        if answer is not None and not answer.strip():
+            answer = step(llm, system, registry, messages, out, note=EMPTY_ANSWER_NOTE)
         if answer is not None:
             out.newline()
             return answer
-    return f"Agent did not finish within {MAX_STEPS} steps."
+    return f"Agent did not finish within {MAX_STEPS} steps."  # only if the final step still called tools
 
 
 def _run_tool(registry: dict[str, Tool], name: str, args, out: Console) -> tuple[str, bool]:
@@ -54,15 +65,20 @@ def _run_tool(registry: dict[str, Tool], name: str, args, out: Console) -> tuple
     return output, is_error
 
 
-def _step_anthropic(llm, system, registry, messages, out) -> str | None:
+def _step_anthropic(llm, system, registry, messages, out, note: str | None = None) -> str | None:
+    """With `note`: one extra instruction for this request only, and no tool calls allowed."""
+    extra = {}
+    if note:  # tools stay defined (history has tool_use blocks) but can't be called
+        extra = {"tool_choice": {"type": "none"}}
     with llm.client.messages.stream(
         model=llm.model,
         max_tokens=ANTHROPIC_MAX_TOKENS,
         system=system,
         tools=[t.anthropic() for t in registry.values()],
-        messages=messages,
+        messages=messages + [{"role": "user", "content": note}] if note else messages,
         # each loop step resends the whole history: cache the growing prefix
         cache_control={"type": "ephemeral"},
+        **extra,
     ) as stream:
         for text in stream.text_stream:
             out.text(text)
@@ -86,11 +102,16 @@ def _step_anthropic(llm, system, registry, messages, out) -> str | None:
     return None
 
 
-def _step_openai(llm, system, registry, messages, out) -> str | None:
+def _step_openai(llm, system, registry, messages, out, note: str | None = None) -> str | None:
+    request = [{"role": "system", "content": system}, *messages]
+    tools = {"tools": [t.openai() for t in registry.values()]}
+    if note:  # no tools offered at all: Ollama doesn't reliably honour tool_choice="none"
+        request.append({"role": "user", "content": note})
+        tools = {}
     stream = llm.client.chat.completions.create(
         model=llm.model,
-        messages=[{"role": "system", "content": system}, *messages],
-        tools=[t.openai() for t in registry.values()],
+        messages=request,
+        **tools,
         temperature=LOCAL_TEMPERATURE,
         top_p=0.95,
         stream=True,
