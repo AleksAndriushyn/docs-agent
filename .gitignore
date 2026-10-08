@@ -1,0 +1,18 @@
+# secrets
+.env
+
+# environments and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+app/web/dist/
+
+# local data: vector stores, app state, tester output
+qdrant_data/
+qdrant_storage/
+data/
+sandbox/
+
+.DS_Store

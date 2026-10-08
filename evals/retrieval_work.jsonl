@@ -1,0 +1,10 @@
+{"q": "как PluginLoader загружает плагины из папки", "expect": ["MissionPlanner/Plugin/PluginLoader.cs"]}
+{"q": "base class that every Mission Planner plugin inherits", "expect": ["MissionPlanner/Plugin/Plugin.cs"]}
+{"q": "плагин: как добавить пункт в контекстное меню карты", "expect": ["MissionPlanner/Plugin/Plugin.cs"]}
+{"q": "how does a plugin decide in Init whether it should load", "expect": ["MissionPlanner/Plugin/Plugin.cs", "MissionPlanner/Plugin/PluginLoader.cs"]}
+{"q": "где обрабатывается SYS_STATUS и напряжение батареи", "expect": ["MissionPlanner/ExtLibs/ArduPilot/CurrentState.cs"]}
+{"q": "запрос списка параметров с автопилота", "expect": ["MissionPlanner/ExtLibs/ArduPilot/Mavlink/MAVLinkInterface.cs"]}
+{"q": "download dataflash logs from the vehicle", "expect": ["MissionPlanner/Log/LogDownload.cs", "MissionPlanner/Log/LogDownloadMavLink.cs", "MissionPlanner/Log/LogDownloadscp.cs"]}
+{"q": "кнопка подключения и выбор COM-порта", "expect": ["MissionPlanner/Controls/ConnectionControl.cs", "MissionPlanner/MainV2.cs"]}
+{"q": "MpRpc websocket server transport", "expect": ["MpRpc/Transport/WebSocketGateway.cs"]}
+{"q": "как MpRpc сериализует сообщения протокола", "expect": ["MpRpc/Serialization/"]}

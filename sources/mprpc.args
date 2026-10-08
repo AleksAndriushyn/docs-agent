@@ -1,0 +1,3 @@
+--src=~/Documents/MpRpc
+--collection=work
+--exclude=**/*.Designer.cs
