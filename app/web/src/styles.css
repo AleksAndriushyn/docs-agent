@@ -242,3 +242,39 @@ code, pre { font-family: var(--mono); font-size: 12.5px; }
   .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .sidebar { max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--border); }
 }
+
+.collection-picker { margin-bottom: 10px; flex-wrap: wrap; }
+.collection-picker select, .collection-picker input { flex-basis: 140px; }
+.collection-picker .confirm { flex-basis: 100%; }
+.collection-picker select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+
+.collection-picker input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  padding: 5px 8px;
+}
+.confirm {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+button.danger-solid { background: var(--bad); border-color: var(--bad); color: #fff; }

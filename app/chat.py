@@ -54,15 +54,21 @@ class EventConsole(Console):
 class ChatSession:
     """Single-user session: one conversation at a time, tied to one working folder."""
 
-    def __init__(self, llm: LLM, store: Store, collection: str):
-        self.llm, self.store, self.collection = llm, store, collection
+    def __init__(self, llm: LLM, store_for: Callable[[str], Store], collection: str):
+        self.llm, self.store_for, self.collection = llm, store_for, collection
         self.root: str | None = None
         self.messages: list = []
         self.agent: Agent | None = None
-        self.has_retriever = False
+        self.had_index = False
         self.run_lock = threading.Lock()
         self.approvals: dict[str, dict] = {}
         self._emit: Emit = lambda e: None
+
+    def use(self, collection: str, root: str) -> None:
+        """Another collection or working folder starts a new conversation."""
+        if (collection, root) != (self.collection, self.root):
+            self.collection = collection
+            self.reset(root=root)
 
     def reset(self, root: str | None = None) -> None:
         self.messages = []
@@ -72,10 +78,11 @@ class ChatSession:
 
     def _agent(self) -> Agent:
         # rebuild when the index appeared after the first message
-        if self.agent is None or (not self.has_retriever and self.store.exists()):
+        store = self.store_for(self.collection)
+        if self.agent is None or (not self.had_index and store.exists()):
+            self.had_index = store.exists()
             self.agent = supervisor_agent(self.llm, Workspace(self.root), self.collection,
-                                          verbose=True, confirm=self._confirm, store=self.store)
-            self.has_retriever = any(t.name == "ask_retriever" for t in self.agent.tools)
+                                          verbose=True, confirm=self._confirm, store=store)
         return self.agent
 
     def _confirm(self, prompt: str) -> bool:

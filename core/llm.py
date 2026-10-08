@@ -5,11 +5,16 @@ stream is assembled; everything else is shared.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from core.config import LOCAL_MODEL, LOCAL_TEMPERATURE, LOCAL_URL, MAX_STEPS, MODEL
 from core.console import Console
+from core.pricing import Usage
 from core.tools import Tool, call_tool
+
+
+# Opus 5.5 always thinks; a small cap would cut answers mid-thought. Streaming avoids timeouts.
+ANTHROPIC_MAX_TOKENS = 32000
 
 
 @dataclass
@@ -17,6 +22,7 @@ class LLM:
     provider: str  # "anthropic" | "local"
     client: object
     model: str
+    usage: Usage = field(default_factory=Usage)  # accumulated over the LLM's lifetime
 
 
 def make_llm(provider: str) -> LLM:
@@ -51,14 +57,19 @@ def _run_tool(registry: dict[str, Tool], name: str, args, out: Console) -> tuple
 def _step_anthropic(llm, system, registry, messages, out) -> str | None:
     with llm.client.messages.stream(
         model=llm.model,
-        max_tokens=4096,
+        max_tokens=ANTHROPIC_MAX_TOKENS,
         system=system,
         tools=[t.anthropic() for t in registry.values()],
         messages=messages,
+        # each loop step resends the whole history: cache the growing prefix
+        cache_control={"type": "ephemeral"},
     ) as stream:
         for text in stream.text_stream:
             out.text(text)
         resp = stream.get_final_message()
+    u = resp.usage
+    llm.usage.add(llm.model, u.input_tokens, u.output_tokens,
+                  u.cache_read_input_tokens or 0, u.cache_creation_input_tokens or 0)
     messages.append({"role": "assistant", "content": resp.content})
 
     if resp.stop_reason != "tool_use":
@@ -83,10 +94,13 @@ def _step_openai(llm, system, registry, messages, out) -> str | None:
         temperature=LOCAL_TEMPERATURE,
         top_p=0.95,
         stream=True,
+        stream_options={"include_usage": True},  # usage arrives in a final chunk without choices
     )
     # No final-message helper in the OpenAI stream: rebuild it from deltas.
     content, calls, thinking = "", {}, False
     for chunk in stream:
+        if chunk.usage:
+            llm.usage.add(llm.model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens)
         if not chunk.choices:
             continue
         delta = chunk.choices[0].delta

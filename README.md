@@ -1,5 +1,7 @@
 # Docs Agent
 
+[![CI](https://github.com/AleksAndriushyn/docs-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/AleksAndriushyn/docs-agent/actions/workflows/ci.yml)
+
 CLI agents that answer questions about your files via tool calling. Fully local mode:
 Ollama (LLM + embeddings) and Qdrant in embedded mode, nothing leaves the machine.
 
@@ -22,14 +24,13 @@ docker compose up -d                              # Qdrant server, dashboard: ht
 
 | `--agent`    | What it does                                                         |
 |--------------|----------------------------------------------------------------------|
-| `files`      | `list_dir` / `read_file` / regex `search` over `--root` (default)    |
-| `rag`        | hybrid search over the Qdrant index + `open_file` for more context   |
+| `research`   | `rag_search` over the Qdrant index (reranked) + `grep` / `read_file` / `list_dir` in `--root` (default) |
 | `tester`     | writes pytest tests for code in `--root`, runs them in `sandbox/`    |
-| `supervisor` | delegates to the three agents above (`ask_retriever`, `ask_files`, `ask_tester`) |
+| `supervisor` | delegates to the two agents above (`ask_researcher`, `ask_tester`)   |
 
 ```bash
 python agent.py --root ./docs -q "Which parameter enables throttle failsafe?"
-python agent.py --agent rag --provider local -v
+python agent.py --agent research --collection work --root ~/Documents/MissionPlanner --provider local -v
 python agent.py --agent tester --root ./src --provider local
 python agent.py --agent supervisor --root ./src --provider local -v
 ```
@@ -55,6 +56,27 @@ The top 16 hybrid candidates are then reordered by a multilingual cross-encoder
 python -m evals.retrieval evals/retrieval_work.jsonl --collection work   # hit@k / MRR, hybrid vs reranked
 ```
 
+## Evals
+
+Two levels:
+
+- **Retrieval** (`evals/retrieval.py`): does the right file reach the top-k? hit@k and MRR, hybrid vs reranked.
+- **Answers** (`evals/run.py`): the researcher (index only) answers each question in `evals/qa_*.jsonl`, an
+  LLM judge compares the answer with a hand-checked reference fact by fact, and citations are
+  checked against the expected files. Questions without an answer in the base check for
+  hallucinations: the agent should say it found nothing.
+
+```bash
+python -m evals.run evals/qa_docs.jsonl --collection docs --provider local
+python -m evals.run evals/qa_work.jsonl --collection work --source ~/Documents/MissionPlanner --provider anthropic
+python -m evals.run evals/results/<run>.json --rejudge --judge claude   # re-grade saved answers
+python -m evals.report evals/results/*.json --md evals/REPORT.md
+```
+
+The judge is the local model by default (free); `--judge claude` uses `claude-opus-5-5` (paid API).
+`--source` limits retrieval to one indexed folder, so other folders in a shared collection
+never reach the API. Every answer also records tokens, cost and latency.
+
 ## Desktop app
 
 ```bash
@@ -78,7 +100,7 @@ UI development: `python -m app --browser` for the API, then `npm run dev` in `ap
 agent.py        CLI
 core/           agent loop for both providers, tools, workspace, console output
 rag/            loaders, chunking, embeddings, Qdrant store, ingest, search
-agents/         files, retriever, tester, supervisor
+agents/         researcher, tester, supervisor
 app/            desktop app: FastAPI + pywebview, React UI in app/web
 tests/          pytest
 ```

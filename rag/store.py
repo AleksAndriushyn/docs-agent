@@ -84,6 +84,25 @@ class Store:
             return 0
         return self.client.count(self.collection, count_filter=_match(source=source), exact=True).count
 
+    def sources(self) -> dict[str, int]:
+        """Indexed folders and their point counts."""
+        if not self.exists():
+            return {}
+        try:
+            res = self.client.facet(self.collection, key="source", limit=1000, exact=True)
+            # the payload index keeps values of deleted points for a while, with count 0
+            return {h.value: h.count for h in res.hits if h.count > 0}
+        except Exception:  # facets need the server and a keyword index; scroll otherwise
+            counts: dict[str, int] = {}
+            offset = None
+            while True:
+                points, offset = self.client.scroll(self.collection, limit=1000, offset=offset,
+                                                    with_payload=["source"], with_vectors=False)
+                for pt in points:
+                    counts[pt.payload["source"]] = counts.get(pt.payload["source"], 0) + 1
+                if offset is None:
+                    return counts
+
     def upsert(self, payloads: list[dict], dense: list[list[float]],
                sparse: list[models.SparseVector]) -> None:
         points = [
@@ -97,11 +116,16 @@ class Store:
         self.client.upsert(self.collection, points)
 
     def search(self, dense: list[float], sparse: models.SparseVector, k: int = 6,
-               lang: str | None = None, path_contains: str | None = None) -> list[Hit]:
+               lang: str | None = None, path_contains: str | None = None,
+               sources: list[str] | None = None) -> list[Hit]:
         flt = _match(lang=lang)
+        extra = []
         if path_contains:
-            cond = models.FieldCondition(key="path", match=models.MatchText(text=path_contains))
-            flt = models.Filter(must=[*(flt.must if flt else []), cond])
+            extra.append(models.FieldCondition(key="path", match=models.MatchText(text=path_contains)))
+        if sources:  # restrict to some indexed folders of a shared collection
+            extra.append(models.FieldCondition(key="source", match=models.MatchAny(any=sources)))
+        if extra:
+            flt = models.Filter(must=[*(flt.must if flt else []), *extra])
         prefetch_k = max(k * 4, 20)  # each retriever proposes more candidates than we return
         res = self.client.query_points(
             self.collection,

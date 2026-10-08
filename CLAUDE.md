@@ -4,7 +4,7 @@
 отвечает на вопросы по файлам в папке через tool calling.
 
 ## Что уже есть
-- `agent.py`: CLI, `--agent {files,rag,tester,supervisor}`.
+- `agent.py`: CLI, `--agent {research,tester,supervisor}`.
 - `core/llm.py`: один агентный цикл со стримингом для двух провайдеров:
   - `--provider anthropic`: Anthropic SDK.
   - `--provider local`: Ollama через OpenAI-совместимый API (`localhost:11434/v1`),
@@ -12,7 +12,8 @@
 - `rag/`: индексация в Qdrant (сервер в Docker через `docker compose`, `QDRANT_URL` в `.env`;
   без него embedded), чанкинг tree-sitter/заголовки, гибрид dense+BM25 (RRF), include/exclude.
   Реранкинг: jina-reranker-v2 multilingual поверх 16 кандидатов; бенчмарк `evals/retrieval.py`.
-- `agents/`: files, retriever, tester (pytest в `sandbox/`), supervisor (саб-агенты как инструменты),
+- `agents/`: researcher (rag_search + grep/read_file/list_dir), tester (pytest в `sandbox/`),
+  supervisor (саб-агенты как инструменты),
   ссылки через номера `[n]` -> `Sources:` (agents/citations.py).
 - `app/`: десктоп-приложение `python -m app` (FastAPI + pywebview, React в `app/web`):
   источники в `data/sources.json`, индексация с прогрессом/остановкой, чат со стримингом (SSE).

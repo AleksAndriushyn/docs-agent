@@ -22,13 +22,34 @@ from core.config import EMBED_MODEL, LOCAL_MODEL, LOCAL_URL, QDRANT_URL
 from core.llm import make_llm
 from rag.store import Store
 
-COLLECTION = os.getenv("APP_COLLECTION", "work")
+DEFAULT_COLLECTION = os.getenv("APP_COLLECTION", "work")
 WEB_DIST = Path(__file__).parent / "web" / "dist"
 
-store = Store(COLLECTION)  # one client for everything: embedded Qdrant allows only one
-registry = Registry(collection=COLLECTION)
-indexer = Indexer(registry, store)
-chat = ChatSession(make_llm("local"), store, COLLECTION)
+_base = Store(DEFAULT_COLLECTION)  # one client for everything: embedded Qdrant allows only one
+_stores: dict[str, Store] = {}
+
+
+def store_for(collection: str) -> Store:
+    if collection not in _stores:
+        _stores[collection] = Store(collection, client=_base.client)
+    return _stores[collection]
+
+
+def qdrant_collections() -> list[str]:
+    return [c.name for c in _base.client.get_collections().collections]
+
+
+registry = Registry(default_collection=DEFAULT_COLLECTION)
+try:  # folders indexed elsewhere (CLI) show up in the UI without reindexing
+    for name in qdrant_collections():
+        indexed = store_for(name).sources()
+        registry.prune_phantoms(name, indexed)
+        for path in indexed:
+            registry.discover(name, path)
+except Exception as e:
+    print(f"Qdrant not reachable at startup: {e}")
+indexer = Indexer(registry, store_for)
+chat = ChatSession(make_llm("local"), store_for, DEFAULT_COLLECTION)
 
 api = FastAPI(title="Docs Agent")
 
@@ -40,25 +61,70 @@ def source_json(src) -> dict:
 # ---------- status
 
 @api.get("/api/status")
-def status() -> dict:
+def status(collection: str = DEFAULT_COLLECTION) -> dict:
     try:
         ollama = httpx.get(f"{LOCAL_URL}/models", timeout=2).is_success
     except httpx.HTTPError:
         ollama = False
     try:
-        points, qdrant = store.count(), True
+        points, qdrant = store_for(collection).count(), True
     except Exception:
         points, qdrant = 0, False
-    return {"model": LOCAL_MODEL, "embed_model": EMBED_MODEL, "collection": COLLECTION,
+    return {"model": LOCAL_MODEL, "embed_model": EMBED_MODEL, "collection": collection,
             "points": points, "ollama": ollama, "qdrant": qdrant,
             "qdrant_mode": "server" if QDRANT_URL else "embedded",
             "root": chat.root}
 
 
+# ---------- collections
+
+class NewCollection(BaseModel):
+    name: str
+
+
+@api.get("/api/collections")
+def list_collections() -> list[dict]:
+    try:
+        names = set(qdrant_collections())
+    except Exception:
+        names = set()
+    out = []
+    for name in sorted(names | set(registry.collections())):
+        try:
+            points = store_for(name).count()
+        except Exception:
+            points = 0
+        out.append({"name": name, "points": points, "sources": len(registry.list(name))})
+    return out
+
+
+@api.post("/api/collections")
+def create_collection(body: NewCollection) -> dict:
+    try:
+        registry.add_collection(body.name)  # the Qdrant collection appears on first indexing
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"name": body.name, "points": 0, "sources": 0}
+
+
 # ---------- sources
+
+@api.delete("/api/collections/{name}")
+def delete_collection(name: str) -> dict:
+    sources = registry.list(name)
+    if any(indexer.busy(src.id) for src in sources):
+        raise HTTPException(409, "Stop indexing in this collection first")
+    store_for(name).drop()  # vectors are gone for good; files on disk are untouched
+    registry.remove_collection(name)
+    _stores.pop(name, None)
+    if chat.collection == name:
+        chat.reset(root="")
+    return {"ok": True, "sources": len(sources)}
+
 
 class AddSource(BaseModel):
     path: str
+    collection: str = DEFAULT_COLLECTION
 
 
 class EditSource(BaseModel):
@@ -67,14 +133,14 @@ class EditSource(BaseModel):
 
 
 @api.get("/api/sources")
-def list_sources() -> list[dict]:
-    return [source_json(s) for s in registry.list()]
+def list_sources(collection: str | None = None) -> list[dict]:
+    return [source_json(s) for s in registry.list(collection)]
 
 
 @api.post("/api/sources")
 def add_source(body: AddSource) -> dict:
     try:
-        src = registry.add(body.path)
+        src = registry.add(body.path, body.collection)
     except FileNotFoundError as e:
         raise HTTPException(404, f"Not found: {e}")
     indexer.enqueue(src.id)
@@ -111,7 +177,7 @@ def remove_source(sid: str) -> dict:
     if indexer.busy(sid):
         raise HTTPException(409, "Source is being indexed")
     src = registry.remove(sid)
-    store.delete_source(src.path)
+    store_for(src.collection).delete_source(src.path)
     if chat.root == src.path:
         chat.reset(root="")
     return {"ok": True}
@@ -157,6 +223,7 @@ def _open_cmd(target: Path, line: str) -> list[str]:
 class ChatRequest(BaseModel):
     message: str
     root: str  # working folder for the files/tester agents
+    collection: str = DEFAULT_COLLECTION  # knowledge base for the retriever
 
 
 class Approval(BaseModel):
@@ -168,8 +235,7 @@ class Approval(BaseModel):
 def chat_stream(body: ChatRequest) -> StreamingResponse:
     if not Path(body.root).is_dir():
         raise HTTPException(400, "Pick a working folder first")
-    if body.root != chat.root:
-        chat.reset(root=body.root)  # different folder = new conversation
+    chat.use(body.collection, body.root)
 
     def sse():
         for event in chat.run(body.message):
