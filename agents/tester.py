@@ -11,7 +11,7 @@ import time
 from typing import Callable
 
 from agents.base import Agent
-from agents.files import workspace_tools
+from agents.researcher import workspace_tools
 from core.config import SANDBOX_DIR
 from core.tools import Tool, schema
 from core.workspace import Workspace
@@ -21,7 +21,7 @@ MAX_OUTPUT = 8000
 
 SYSTEM = """You write and run pytest tests for Python code in the working folder.
 Workflow:
-1. Read the code (read_file, search) and understand the public behaviour.
+1. Read the code (read_file, grep) and understand the public behaviour.
 2. copy_to_sandbox the modules under test (paths are preserved, the sandbox is on
    sys.path, import as usual: `from pkg.mod import f`).
 3. write_test: test_*.py files in the sandbox. Cover behaviour, edge cases, errors.

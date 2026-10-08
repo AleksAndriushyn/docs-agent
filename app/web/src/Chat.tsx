@@ -18,14 +18,17 @@ type Turn = {
 
 const FOOTER = /\n*(Sources|Retrieved \(not cited\)):\n([\s\S]*)$/;
 
-export function Chat({ root, sources }: { root: string; sources: Source[] }) {
+export function Chat({ root, collection, sources }: { root: string; collection: string; sources: Source[] }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const running = turns.some((t) => t.running);
   const end = useRef<HTMLDivElement>(null);
   const rootName = sources.find((s) => s.path === root)?.name;
 
-  useEffect(() => end.current?.scrollIntoView({ block: "end" }), [turns]);
+  useEffect(() => {
+    // braces matter: scrollIntoView may return a Promise, and an effect's return value is its cleanup
+    end.current?.scrollIntoView({ block: "end" });
+  }, [turns]);
 
   async function newChat() {
     await api.resetChat();
@@ -40,7 +43,7 @@ export function Chat({ root, sources }: { root: string; sources: Source[] }) {
     const update = (fn: (t: Turn) => Turn) =>
       setTurns((ts) => ts.map((t, i) => (i === ts.length - 1 ? fn(t) : t)));
 
-    await streamChat(question, root, (e: ChatEvent) => {
+    await streamChat(question, root, collection, (e: ChatEvent) => {
       switch (e.type) {
         case "text": return update((t) => ({ ...t, answer: t.answer + e.text }));
         case "thinking": return update((t) => ({ ...t, thinking: t.thinking + e.text }));
@@ -64,8 +67,9 @@ export function Chat({ root, sources }: { root: string; sources: Source[] }) {
     <main className="chat">
       <header className="chat-head">
         <div>
-          <span className="muted">Working folder: </span>
-          <strong>{rootName ?? "pick a source on the left"}</strong>
+          <span className="muted">Knowledge base: </span><strong>{collection}</strong>
+          <span className="muted"> · working folder: </span>
+          <strong>{rootName ?? "add a source on the left"}</strong>
         </div>
         <button onClick={newChat} disabled={running || turns.length === 0}>New chat</button>
       </header>
@@ -75,8 +79,7 @@ export function Chat({ root, sources }: { root: string; sources: Source[] }) {
           <div className="welcome muted">
             <p>Ask about your indexed files. The supervisor delegates to agents:</p>
             <ul>
-              <li><b>retriever</b> searches the knowledge base by meaning</li>
-              <li><b>files</b> reads and regex-searches the working folder</li>
+              <li><b>researcher</b> searches the knowledge base by meaning, greps and reads the working folder</li>
               <li><b>tester</b> writes and runs pytest tests (asks before running)</li>
             </ul>
           </div>

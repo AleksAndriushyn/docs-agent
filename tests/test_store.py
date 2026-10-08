@@ -40,3 +40,9 @@ def test_file_hashes_and_delete():
 
 def test_lang_filter():
     assert make_store().search([1, 0, 0], sv(1), k=5, lang="python") == []
+
+
+def test_sources_filter():
+    store = make_store()
+    assert store.search([1, 0, 0], sv(1), k=5, sources=["/other"]) == []
+    assert len(store.search([1, 0, 0], sv(1), k=5, sources=["/src"])) == 3

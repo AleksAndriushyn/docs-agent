@@ -5,6 +5,7 @@ import queue
 import threading
 import time
 from pathlib import Path
+from typing import Callable
 
 from app.sources import Registry
 from rag.embed import DenseEmbedder, SparseEmbedder
@@ -14,8 +15,8 @@ from rag.store import Store
 
 
 class Indexer:
-    def __init__(self, registry: Registry, store: Store):
-        self.registry, self.store = registry, store
+    def __init__(self, registry: Registry, store_for: Callable[[str], Store]):
+        self.registry, self.store_for = registry, store_for
         self.jobs: queue.Queue[str] = queue.Queue()
         self.progress: dict[str, dict] = {}  # source id -> {done, total, current}
         self.stop_requested: set[str] = set()
@@ -27,8 +28,9 @@ class Indexer:
         """Sources imported from CLI .args files come without counts."""
         for src in self.registry.list():
             if src.status == "ready" and not src.files:
-                src.files = sum(1 for _ in iter_files(Path(src.path), src.include, src.exclude))
-                src.chunks = self.store.count(src.path)
+                if Path(src.path).is_dir():
+                    src.files = sum(1 for _ in iter_files(Path(src.path), src.include, src.exclude))
+                src.chunks = self.store_for(src.collection).count(src.path)
         self.registry.save()
 
     def enqueue(self, sid: str) -> None:
@@ -70,11 +72,12 @@ class Indexer:
             def on_file(done: int, total: int, rel: str, status: str) -> None:
                 self.progress[sid] = {"done": done, "total": total, "current": rel}
 
-            st = ingest(Path(src.path), self.store, self._dense, self._sparse,
+            store = self.store_for(src.collection)
+            st = ingest(Path(src.path), store, self._dense, self._sparse,
                         src.include, src.exclude, on_file=on_file,
                         should_stop=lambda: sid in self.stop_requested)
             src.files = st.total
-            src.chunks = self.store.count(src.path)
+            src.chunks = store.count(src.path)
             src.last_indexed = time.time()
             if st.cancelled:
                 done = self.progress.get(sid, {}).get("done", 0)

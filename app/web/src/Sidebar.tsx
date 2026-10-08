@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { api, pickPaths, type Source, type Status } from "./api";
+import { api, pickPaths, type Collection, type Source, type Status } from "./api";
 
 type Props = {
+  collections: Collection[];
+  collection: string;
+  onCollection: (name: string) => void;
   sources: Source[];
   status: Status | null;
   root: string;
@@ -9,13 +12,13 @@ type Props = {
   onChange: () => void;
 };
 
-export function Sidebar({ sources, status, root, onRoot, onChange }: Props) {
+export function Sidebar({ collections, collection, onCollection, sources, status, root, onRoot, onChange }: Props) {
   const [error, setError] = useState("");
 
   async function add(kind: "folder" | "files") {
     setError("");
     try {
-      for (const path of await pickPaths(kind)) await api.addSource(path);
+      for (const path of await pickPaths(kind)) await api.addSource(path, collection);
     } catch (e) {
       setError(String(e instanceof Error ? e.message : e));
     }
@@ -26,6 +29,8 @@ export function Sidebar({ sources, status, root, onRoot, onChange }: Props) {
     <aside className="sidebar">
       <header className="sidebar-head">
         <h1>Knowledge base</h1>
+        <CollectionPicker collections={collections} value={collection} onChange={onCollection}
+          onCreated={onChange} onError={setError} />
         {status && (
           <div className="health">
             <Dot ok={status.ollama} label={`Ollama · ${status.model}`} />
@@ -41,7 +46,9 @@ export function Sidebar({ sources, status, root, onRoot, onChange }: Props) {
       </header>
 
       <ul className="sources">
-        {sources.length === 0 && <li className="muted empty">Add a folder or files to index them.</li>}
+        {sources.length === 0 && (
+          <li className="muted empty">“{collection}” is empty. Add a folder or files to index them.</li>
+        )}
         {sources.map((s) => (
           <SourceItem key={s.id} source={s} active={s.path === root} onRoot={onRoot} onChange={onChange} />
         ))}
@@ -131,4 +138,79 @@ function SourceItem({ source: s, active, onRoot, onChange }: {
 
 function Dot({ ok, label }: { ok: boolean; label: string }) {
   return <span className="dot-label"><span className={`dot ${ok ? "ok" : "bad"}`} />{label}</span>;
+}
+
+function CollectionPicker({ collections, value, onChange, onCreated, onError }: {
+  collections: Collection[]; value: string; onChange: (name: string) => void;
+  onCreated: () => void; onError: (msg: string) => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [name, setName] = useState("");
+  const names = collections.some((c) => c.name === value)
+    ? collections : [...collections, { name: value, points: 0, sources: 0 }];
+  const current = names.find((c) => c.name === value);
+
+  async function create() {
+    const n = name.trim();
+    if (!n) return;
+    try {
+      await api.createCollection(n);
+      onChange(n);
+      onCreated();
+      setCreating(false);
+      setName("");
+    } catch (e) {
+      onError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function remove() {
+    try {
+      await api.deleteCollection(value);
+      setDeleting(false);
+      const next = collections.find((c) => c.name !== value);
+      onChange(next?.name ?? "work");
+      onCreated();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  if (creating) {
+    return (
+      <div className="row collection-picker">
+        <input autoFocus value={name} placeholder="new-base-name" aria-label="New knowledge base name"
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") create(); if (e.key === "Escape") setCreating(false); }} />
+        <button className="primary" onClick={create} disabled={!name.trim()}>Create</button>
+        <button onClick={() => setCreating(false)}>Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="row collection-picker">
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Knowledge base">
+        {names.map((c) => (
+          <option key={c.name} value={c.name}>
+            {c.name} · {c.sources} {c.sources === 1 ? "source" : "sources"}
+          </option>
+        ))}
+      </select>
+      <button onClick={() => setCreating(true)} title="New knowledge base">New</button>
+      <button className="danger" onClick={() => setDeleting(true)} title="Delete this knowledge base">Delete</button>
+      {deleting && (
+        <div className="confirm">
+          <span>Delete knowledge base <b>{value}</b> with {current?.sources ?? 0} sources and{" "}
+            {(current?.points ?? 0).toLocaleString()} chunks? Files on disk are not touched,
+            but reindexing takes time.</span>
+          <div className="row">
+            <button className="danger-solid" onClick={remove}>Delete</button>
+            <button onClick={() => setDeleting(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

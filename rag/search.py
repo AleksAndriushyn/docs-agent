@@ -11,8 +11,9 @@ from rag.store import Hit, Store
 
 class Retriever:
     def __init__(self, collection: str = RAG_COLLECTION, store: Store | None = None,
-                 rerank: bool = bool(RERANK_MODEL)):
+                 rerank: bool = bool(RERANK_MODEL), sources: list[str] | None = None):
         self.store = store or Store(collection)
+        self.sources = sources
         if not self.store.exists():
             raise SystemExit(f"Collection '{collection}' not found. Run first: python -m rag.ingest --src <folder>")
         self.dense, self.sparse = DenseEmbedder(), SparseEmbedder()
@@ -24,7 +25,7 @@ class Retriever:
         # with reranking, hybrid search only proposes candidates and the cross-encoder picks k
         n = max(k, RERANK_CANDIDATES) if self.rerank else k
         hits = self.store.search(self.dense.embed_query(query), self.sparse.embed_query(query),
-                                 k=n, lang=lang, path_contains=path_contains)
+                                 k=n, lang=lang, path_contains=path_contains, sources=self.sources)
         if not self.rerank:
             return hits
         if self._reranker is None:  # ~1 GB model, loaded on first use

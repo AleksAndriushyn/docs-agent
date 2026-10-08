@@ -4,8 +4,7 @@ from typing import Callable
 
 from agents.base import Agent
 from agents.citations import Citations
-from agents.files import files_agent
-from agents.retriever import retriever_agent
+from agents.researcher import researcher_agent
 from agents.tester import tester_agent
 from core.llm import LLM
 from core.workspace import Workspace
@@ -13,9 +12,10 @@ from rag.store import Store
 
 SYSTEM = """You are a coordinator. You don't read files yourself: you delegate to agent tools
 and assemble the final answer.
-- ask_retriever: semantic questions over the work-file knowledge base ("how does X work", "where is Y configured").
-- ask_files: exact paths, folder structure, regex search, reading a specific file.
+- ask_researcher: any question about the work files (code and docs): it searches the
+  knowledge base by meaning and the working folder by regex, and reads files.
 - ask_tester: write and run tests for a Python module.
+Simple questions need one ask_researcher call; split only genuinely separate subtasks.
 Rules:
 - Agents don't see the conversation: make each task self-contained, with paths and names.
 - Independent subtasks can go to different agents. Don't repeat the same task.
@@ -28,11 +28,7 @@ Rules:
 def supervisor_agent(llm: LLM, ws: Workspace, collection: str, verbose: bool,
                      confirm: Callable[[str], bool] | None = None,
                      store: Store | None = None) -> Agent:
-    subagents = [files_agent(ws), tester_agent(ws, confirm)]
-    try:
-        subagents.insert(0, retriever_agent(collection, store))
-    except SystemExit as e:  # no index yet: work without RAG
-        print(f"[supervisor] {e}. Running without retriever.")
+    subagents = [researcher_agent(ws, collection, store), tester_agent(ws, confirm)]
     cites = Citations()
     return Agent(
         name="supervisor",

@@ -99,7 +99,8 @@ def test_indexer_cancel_running_and_queued(tmp_path, monkeypatch):
             return [models.SparseVector(indices=[1], values=[1.0]) for _ in texts]
 
     reg = Registry(tmp_path / "sources.json")
-    idx = Indexer(reg, Store("t", client=QdrantClient(location=":memory:")))
+    store = Store("t", client=QdrantClient(location=":memory:"))
+    idx = Indexer(reg, lambda name: store)
     idx._dense, idx._sparse = Dense(), Sparse()
     a, b = reg.add(str(slow)), reg.add(str(fast))
     idx.enqueue(a.id)
@@ -114,3 +115,49 @@ def test_indexer_cancel_running_and_queued(tmp_path, monkeypatch):
     assert a.status == "cancelled" and "Stopped at" in a.error
     assert 0 < a.chunks < 50
     assert b.status == "cancelled" and b.chunks == 0
+
+
+def test_same_folder_in_two_collections(reg):
+    r, proj = reg
+    a = r.add(str(proj), "work")
+    b = r.add(str(proj), "docs")
+    assert a.id != b.id
+    assert [s.collection for s in r.list("docs")] == ["docs"]
+    assert {"work", "docs"} <= set(r.collections())
+
+
+def test_collections_persist_and_validate(reg, tmp_path):
+    r, proj = reg
+    r.add_collection("notes")
+    assert "notes" in Registry(tmp_path / "data" / "sources.json").collections()
+    with pytest.raises(ValueError):
+        r.add_collection("bad name!")
+
+
+def test_discover_and_legacy_format(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr("app.sources.ARGS_DIR", tmp_path / "no-args")
+    f = tmp_path / "sources.json"
+    f.write_text(json.dumps([{"path": "/x", "status": "ready"}]))  # pre-collections format
+    r = Registry(f)
+    assert r.list("work")[0].path == "/x"
+    assert r.discover("docs", "/y") is not None and r.discover("docs", "/y") is None
+
+
+def test_remove_collection(reg):
+    r, proj = reg
+    r.add(str(proj), "tmp")
+    r.add(str(proj), "work")
+    assert len(r.remove_collection("tmp")) == 1
+    assert "tmp" not in r.collections() and len(r.list("work")) == 1
+
+
+def test_prune_phantoms_keeps_indexed_and_user_sources(reg):
+    r, proj = reg
+    phantom = r.discover("work", "/gone")
+    kept = r.discover("work", "/still-there")
+    user = r.add(str(proj), "work")
+    user.status, user.last_indexed = "ready", 123.0  # indexed by the app, now empty
+    removed = r.prune_phantoms("work", {"/still-there": 10})
+    assert [s.path for s in removed] == ["/gone"]
+    assert kept.id in r.items and user.id in r.items and phantom.id not in r.items
