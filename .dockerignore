@@ -1,0 +1,14 @@
+# secrets: passed at runtime via env_file, never baked into the image
+.env
+.git
+.venv
+**/__pycache__
+.pytest_cache
+**/node_modules
+app/web/dist
+# local state: mounted as volumes
+data
+qdrant_data
+qdrant_storage
+sandbox
+evals/results

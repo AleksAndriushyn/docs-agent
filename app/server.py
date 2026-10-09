@@ -200,7 +200,10 @@ def open_ref(body: OpenRef) -> dict:
     for src in registry.list():
         target = Path(src.path) / rel
         if Path(src.path).name == name and target.is_file():
-            subprocess.Popen(_open_cmd(target, line))
+            try:
+                subprocess.Popen(_open_cmd(target, line))
+            except FileNotFoundError:  # in Docker there is neither `code` nor `open`
+                raise HTTPException(501, f"No editor here to open {target}")
             return {"ok": True, "path": str(target)}
     raise HTTPException(404, f"Cannot resolve {body.ref}")
 

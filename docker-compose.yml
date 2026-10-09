@@ -7,3 +7,32 @@ services:
       - "6334:6334"  # gRPC
     volumes:
       - ./qdrant_storage:/qdrant/storage
+
+  # Opt-in, so `docker compose up -d` still starts only Qdrant:
+  #   docker compose --profile app up -d --build
+  app:
+    profiles: ["app"]
+    build: .
+    restart: unless-stopped
+    depends_on: [qdrant]
+    ports:
+      # localhost only: no auth, and the tester agent runs code
+      - "127.0.0.1:8765:8765"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # override .env: inside the container localhost is the container itself
+      QDRANT_URL: http://qdrant:6333
+      LOCAL_URL: http://host.docker.internal:11434/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Linux; Docker Desktop resolves it anyway
+    volumes:
+      - ./data:/app/data  # sources.json and saved chats, shared with `python -m app`
+      - ./sandbox:/app/sandbox
+      - model-cache:/cache
+      # indexed folders are stored by host path: mount them at the same path, read-only
+      - ${SOURCES_DIR:-${HOME}/Documents}:${SOURCES_DIR:-${HOME}/Documents}:ro
+
+volumes:
+  model-cache:
