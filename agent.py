@@ -2,6 +2,7 @@
 
     python agent.py --root ./docs -q "Which parameters control failsafe?"     # researcher (default)
     python agent.py --agent tester --root ./src --provider local                 # pytest in sandbox
+    python agent.py --agent research-lg --root ./docs --provider local           # researcher on LangGraph
     python agent.py --agent supervisor --root ./src --provider local -v          # all of the above
 """
 from __future__ import annotations
@@ -18,6 +19,10 @@ def build_agent(name: str, llm, ws: Workspace, collection: str, verbose: bool):
     if name == "research":
         from agents.researcher import researcher_agent
         return researcher_agent(ws, collection)
+    if name == "research-lg":
+        from agents.langgraph_agent import LangGraphAgent
+        from agents.researcher import researcher_agent
+        return LangGraphAgent(researcher_agent(ws, collection))
     if name == "tester":
         from agents.tester import tester_agent
         return tester_agent(ws)
@@ -35,7 +40,7 @@ def print_usage(llm, before=None) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--agent", choices=["research", "tester", "supervisor"], default="research")
+    ap.add_argument("--agent", choices=["research", "research-lg", "tester", "supervisor"], default="research")
     ap.add_argument("--root", default=".", help="Folder the agent works in")
     ap.add_argument("--collection", default=RAG_COLLECTION, help="Qdrant collection for rag/supervisor")
     ap.add_argument("-q", "--question", help="Single question, non-interactive")
@@ -43,7 +48,7 @@ def main() -> None:
     ap.add_argument("--provider", choices=["anthropic", "local"], default="anthropic")
     args = ap.parse_args()
 
-    if args.provider == "anthropic" and args.agent in {"research", "supervisor"}:
+    if args.provider == "anthropic" and args.agent in {"research", "research-lg", "supervisor"}:
         print("Warning: retrieved work-file chunks will be sent to the Anthropic API. "
               "For fully local operation use --provider local.")
 

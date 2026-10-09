@@ -35,7 +35,9 @@ def summarize(run: dict) -> dict:
     return {
         "term_recall": term_recall,
         "judge_lenient": lenient,
-        "run": f"{run['dataset'].split('/')[-1]} · {run['provider']}:{run['model']} · judge {run['judge'].split(':')[1]}",
+        "run": f"{run['dataset'].split('/')[-1]} · {run['provider']}:{run['model']}"
+               f"{'' if run.get('framework', 'native') == 'native' else ' [' + run['framework'] + ']'}"
+               f" · judge {run['judge'].split(':')[1]}",
         "judge": run["judge"],
         "n": len(cases),
         "ungraded": len(every) - len(cases),
