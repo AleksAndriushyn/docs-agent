@@ -108,7 +108,10 @@ def _step_openai(llm, system, registry, messages, out, note: str | None = None) 
     if note:  # no tools offered at all: Ollama doesn't reliably honour tool_choice="none"
         request.append({"role": "user", "content": note})
         tools = {}
-    stream = llm.client.chat.completions.create(
+    # No final-message helper in the OpenAI stream: rebuild it from deltas.
+    content, calls, thinking = "", {}, False
+    # `with` closes the HTTP stream on any exit: Ollama stops generating when the client leaves
+    with llm.client.chat.completions.create(
         model=llm.model,
         messages=request,
         **tools,
@@ -116,33 +119,31 @@ def _step_openai(llm, system, registry, messages, out, note: str | None = None) 
         top_p=0.95,
         stream=True,
         stream_options={"include_usage": True},  # usage arrives in a final chunk without choices
-    )
-    # No final-message helper in the OpenAI stream: rebuild it from deltas.
-    content, calls, thinking = "", {}, False
-    for chunk in stream:
-        if chunk.usage:
-            llm.usage.add(llm.model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens)
-        if not chunk.choices:
-            continue
-        delta = chunk.choices[0].delta
-        # Thinking models (qwen3.x on Ollama) stream reasoning in a non-standard field.
-        reasoning = getattr(delta, "reasoning", None)
-        if reasoning:
-            out.thinking(reasoning)
-            thinking = True
-        if thinking and (delta.content or delta.tool_calls):
-            out.thinking("\n\n")
-            thinking = False
-        if delta.content:
-            out.text(delta.content)
-            content += delta.content
-        for tc in delta.tool_calls or []:
-            # arguments come as JSON fragments, joined by call index
-            c = calls.setdefault(tc.index, {"id": "", "name": "", "arguments": ""})
-            c["id"] = tc.id or c["id"]
-            if tc.function:
-                c["name"] += tc.function.name or ""
-                c["arguments"] += tc.function.arguments or ""
+    ) as stream:
+        for chunk in stream:
+            if chunk.usage:
+                llm.usage.add(llm.model, chunk.usage.prompt_tokens, chunk.usage.completion_tokens)
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta
+            # Thinking models (qwen3.x on Ollama) stream reasoning in a non-standard field.
+            reasoning = getattr(delta, "reasoning", None)
+            if reasoning:
+                out.thinking(reasoning)
+                thinking = True
+            if thinking and (delta.content or delta.tool_calls):
+                out.thinking("\n\n")
+                thinking = False
+            if delta.content:
+                out.text(delta.content)
+                content += delta.content
+            for tc in delta.tool_calls or []:
+                # arguments come as JSON fragments, joined by call index
+                c = calls.setdefault(tc.index, {"id": "", "name": "", "arguments": ""})
+                c["id"] = tc.id or c["id"]
+                if tc.function:
+                    c["name"] += tc.function.name or ""
+                    c["arguments"] += tc.function.arguments or ""
 
     if not calls:
         messages.append({"role": "assistant", "content": content})

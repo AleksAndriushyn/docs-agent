@@ -88,6 +88,8 @@ def main() -> None:
     ap.add_argument("--judge", choices=["local", "claude", "claude-code"], default="local",
                     help="claude: API credits; claude-code: the Claude subscription via the CLI")
     ap.add_argument("--judge-model", help="Local judge model (default: the agent's LOCAL_MODEL)")
+    ap.add_argument("--framework", choices=["native", "langgraph"], default="native",
+                    help="Agent loop: core.llm.run_loop or the same agent on LangGraph")
     ap.add_argument("--source", action="append", help="Restrict retrieval to these indexed folders")
     ap.add_argument("--only", help="Comma-separated case ids")
     args = ap.parse_args()
@@ -109,8 +111,11 @@ def main() -> None:
     llm = make_llm(args.provider)
     # index only, no working folder: the same setup as earlier "rag" runs, so results compare
     agent = researcher_agent(None, args.collection, Store(args.collection), sources=sources)
+    if args.framework == "langgraph":
+        from agents.langgraph_agent import LangGraphAgent
+        agent = LangGraphAgent(agent)
     judge = Judge(args.judge, args.judge_model)
-    print(f"{len(cases)} cases · agent researcher/{args.provider}:{llm.model} · judge {judge.name}")
+    print(f"{len(cases)} cases · agent researcher[{args.framework}]/{args.provider}:{llm.model} · judge {judge.name}")
 
     rows = []
     for c in cases:
@@ -142,10 +147,12 @@ def main() -> None:
 
     RESULTS_DIR.mkdir(exist_ok=True)
     stem = f"{time.strftime('%Y%m%d-%H%M')}-{Path(args.dataset).stem}-{args.provider}"
+    if args.framework != "native":
+        stem += f"-{args.framework}"
     out = RESULTS_DIR / f"{stem}.json"
     out.write_text(json.dumps({
         "dataset": args.dataset, "collection": args.collection, "provider": args.provider,
-        "model": llm.model, "judge": judge.name, "judge_usage": judge.usage,
+        "framework": args.framework, "model": llm.model, "judge": judge.name, "judge_usage": judge.usage,
         "sources": sources, "created": time.strftime("%Y-%m-%d %H:%M"), "cases": rows,
     }, ensure_ascii=False, indent=1))
     print(f"\nSaved {out}")

@@ -25,7 +25,37 @@ export type Status = {
   ollama: boolean;
   qdrant: boolean;
   qdrant_mode: "server" | "embedded";
+  running_chat: string | null;
 };
+
+export type Step = { agent: string; name?: string; args?: unknown; chars?: number; text?: string };
+export type Approval = { id: string; prompt: string; state: "pending" | "approved" | "declined" };
+
+export type Turn = {
+  question: string;
+  answer: string;
+  thinking: string;
+  steps: Step[];
+  approvals: Approval[];
+  error: string | null;
+  status: "running" | "done" | "error" | "stopped";
+  started: number;  // unix seconds
+  finished: number | null;
+};
+
+export type ChatSummary = {
+  id: string;
+  collection: string;
+  root: string;
+  title: string;
+  created: number;
+  updated: number;
+  turns: number;
+  running: boolean;
+};
+
+/** `offset`: index in the live run's events where a stream continues after `items`. */
+export type ChatFull = ChatSummary & { items: Turn[]; offset: number };
 
 export type ChatEvent =
   | { type: "text"; text: string }
@@ -35,6 +65,7 @@ export type ChatEvent =
   | { type: "approval"; id: string; prompt: string }
   | { type: "approval_done"; id: string; approved: boolean }
   | { type: "done" }
+  | { type: "stopped"; message?: string }
   | { type: "error"; message: string };
 
 declare global {
@@ -69,19 +100,23 @@ export const api = {
   reindex: (id: string) => call<Source>("POST", `/api/sources/${id}/reindex`),
   cancel: (id: string) => call<Source>("POST", `/api/sources/${id}/cancel`),
   removeSource: (id: string) => call("DELETE", `/api/sources/${id}`),
-  resetChat: () => call("POST", "/api/chat/reset"),
-  approve: (id: string, approved: boolean) => call("POST", "/api/approve", { id, approved }),
+  chats: (collection: string, root: string) =>
+    call<ChatSummary[]>("GET", `/api/chats?collection=${encodeURIComponent(collection)}&root=${encodeURIComponent(root)}`),
+  chat: (id: string) => call<ChatFull>("GET", `/api/chats/${id}`),
+  createChat: (collection: string, root: string) => call<ChatFull>("POST", "/api/chats", { collection, root }),
+  deleteChat: (id: string) => call("DELETE", `/api/chats/${id}`),
+  ask: (id: string, message: string) => call<ChatFull>("POST", `/api/chats/${id}/messages`, { message }),
+  stop: (id: string) => call("POST", `/api/chats/${id}/stop`),
+  approve: (chat: string, id: string, approved: boolean) =>
+    call("POST", `/api/chats/${chat}/approve`, { id, approved }),
   openRef: (ref: string) => call("POST", "/api/open", { ref }),
 };
 
-/** POST + Server-Sent Events (EventSource can't send a body). */
-export async function streamChat(message: string, root: string, collection: string,
-                                 onEvent: (e: ChatEvent) => void) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, root, collection }),
-  });
+/** Server-Sent Events of a chat's live run, from event index `after`; ends with the run.
+ * fetch rather than EventSource: EventSource reconnects on its own and would replay events. */
+export async function streamChat(id: string, after: number, onEvent: (e: ChatEvent) => void,
+                                 signal: AbortSignal) {
+  const res = await fetch(`/api/chats/${id}/events?after=${after}`, { signal });
   if (!res.ok || !res.body) {
     const detail = await res.json().then((j) => j.detail).catch(() => res.statusText);
     onEvent({ type: "error", message: String(detail) });
@@ -97,7 +132,7 @@ export async function streamChat(message: string, root: string, collection: stri
     const frames = buffer.split("\n\n");
     buffer = frames.pop() ?? "";
     for (const frame of frames) {
-      if (frame.startsWith("data: ")) onEvent(JSON.parse(frame.slice(6)));
+      if (frame.startsWith("data: ")) onEvent(JSON.parse(frame.slice(6)));  // ": ping" frames are skipped
     }
   }
 }

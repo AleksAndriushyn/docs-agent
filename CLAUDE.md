@@ -15,6 +15,10 @@
 - `agents/`: researcher (rag_search + grep/read_file/list_dir), tester (pytest в `sandbox/`),
   supervisor (саб-агенты как инструменты),
   ссылки через номера `[n]` -> `Sources:` (agents/citations.py).
+- `agents/langgraph_agent.py`: тот же researcher на LangGraph (`--agent research-lg`,
+  в evals `--framework langgraph`): промпт, инструменты и цитаты общие с `run_loop`.
+- `mcp_servers/rag.py`: MCP-сервер (mcp 2.x, `MCPServer`, stdio) с `list_collections`,
+  `rag_search`, `read_file` поверх `rag/`; запуск `python -m mcp_servers.rag`.
 - `app/`: десктоп-приложение `python -m app` (FastAPI + pywebview, React в `app/web`):
   источники в `data/sources.json`, индексация с прогрессом/остановкой, чат со стримингом (SSE).
 - Рабочая коллекция `work`: MissionPlanner (основной код + плагины) и MpRpc, см. `sources/*.args`.
