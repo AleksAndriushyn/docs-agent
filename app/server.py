@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.concurrency import iterate_in_threadpool
 
-from app.chat import ChatSession
+from app.chat import ChatManager
 from app.indexer import Indexer
 from app.sources import Registry
 from core.config import EMBED_MODEL, LOCAL_MODEL, LOCAL_URL, QDRANT_URL
@@ -49,7 +49,7 @@ try:  # folders indexed elsewhere (CLI) show up in the UI without reindexing
 except Exception as e:
     print(f"Qdrant not reachable at startup: {e}")
 indexer = Indexer(registry, store_for)
-chat = ChatSession(make_llm("local"), store_for, DEFAULT_COLLECTION)
+chats = ChatManager(make_llm("local"), store_for)
 
 api = FastAPI(title="Docs Agent")
 
@@ -73,7 +73,7 @@ def status(collection: str = DEFAULT_COLLECTION) -> dict:
     return {"model": LOCAL_MODEL, "embed_model": EMBED_MODEL, "collection": collection,
             "points": points, "ollama": ollama, "qdrant": qdrant,
             "qdrant_mode": "server" if QDRANT_URL else "embedded",
-            "root": chat.root}
+            "running_chat": chats.running()}
 
 
 # ---------- collections
@@ -116,9 +116,7 @@ def delete_collection(name: str) -> dict:
         raise HTTPException(409, "Stop indexing in this collection first")
     store_for(name).drop()  # vectors are gone for good; files on disk are untouched
     registry.remove_collection(name)
-    _stores.pop(name, None)
-    if chat.collection == name:
-        chat.reset(root="")
+    _stores.pop(name, None)  # chats stay on disk and come back if the collection is recreated
     return {"ok": True, "sources": len(sources)}
 
 
@@ -177,9 +175,7 @@ def remove_source(sid: str) -> dict:
     if indexer.busy(sid):
         raise HTTPException(409, "Source is being indexed")
     src = registry.remove(sid)
-    store_for(src.collection).delete_source(src.path)
-    if chat.root == src.path:
-        chat.reset(root="")
+    store_for(src.collection).delete_source(src.path)  # its chats stay, like the files
     return {"ok": True}
 
 
@@ -218,12 +214,15 @@ def _open_cmd(target: Path, line: str) -> list[str]:
     return ["open", str(target)]
 
 
-# ---------- chat
+# ---------- chats
 
-class ChatRequest(BaseModel):
+class NewChat(BaseModel):
+    root: str  # working folder (a source of the collection)
+    collection: str = DEFAULT_COLLECTION
+
+
+class Message(BaseModel):
     message: str
-    root: str  # working folder for the files/tester agents
-    collection: str = DEFAULT_COLLECTION  # knowledge base for the retriever
 
 
 class Approval(BaseModel):
@@ -231,30 +230,78 @@ class Approval(BaseModel):
     approved: bool
 
 
-@api.post("/api/chat")
-def chat_stream(body: ChatRequest) -> StreamingResponse:
+def _chat(cid: str):
+    try:
+        return chats.get(cid)
+    except KeyError:
+        raise HTTPException(404, "Unknown chat")
+
+
+@api.get("/api/chats")
+def list_chats(collection: str, root: str) -> list[dict]:
+    return chats.list(collection, root)
+
+
+@api.post("/api/chats")
+def create_chat(body: NewChat) -> dict:
     if not Path(body.root).is_dir():
         raise HTTPException(400, "Pick a working folder first")
-    chat.use(body.collection, body.root)
+    return chats.create(body.collection, body.root).to_json()
+
+
+@api.get("/api/chats/{cid}")
+def get_chat(cid: str) -> dict:
+    return _chat(cid).to_json()
+
+
+@api.delete("/api/chats/{cid}")
+def delete_chat(cid: str) -> dict:
+    _chat(cid)
+    try:
+        chats.delete(cid)
+    except RuntimeError as e:
+        raise HTTPException(409, str(e))
+    return {"ok": True}
+
+
+@api.post("/api/chats/{cid}/messages")
+def ask(cid: str, body: Message) -> dict:
+    chat = _chat(cid)
+    if not Path(chat.root).is_dir():
+        raise HTTPException(400, f"Working folder not found: {chat.root}")
+    try:
+        chats.ask(cid, body.message)
+    except RuntimeError as e:
+        raise HTTPException(409, str(e))
+    return chat.to_json()
+
+
+@api.get("/api/chats/{cid}/events")
+def chat_events(cid: str, after: int = 0) -> StreamingResponse:
+    """SSE of the live run from event index `after` (the `offset` of GET /api/chats/{cid}).
+    A closed connection just stops the iteration; the run itself goes on."""
+    chat = _chat(cid)
 
     def sse():
-        for event in chat.run(body.message):
-            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        for event in chat.stream(after):
+            yield ": ping\n\n" if event is None else f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
-    # the sync generator blocks on a queue; run it off the event loop
+    # the sync generator blocks on a condition; run it off the event loop
     return StreamingResponse(iterate_in_threadpool(sse()), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
-@api.post("/api/chat/reset")
-def chat_reset() -> dict:
-    chat.reset()
+@api.post("/api/chats/{cid}/stop")
+def stop_chat(cid: str) -> dict:
+    _chat(cid)
+    chats.stop(cid)
     return {"ok": True}
 
 
-@api.post("/api/approve")
-def approve(body: Approval) -> dict:
-    if not chat.approve(body.id, body.approved):
+@api.post("/api/chats/{cid}/approve")
+def approve(cid: str, body: Approval) -> dict:
+    _chat(cid)
+    if not chats.approve(cid, body.id, body.approved):
         raise HTTPException(404, "No pending approval with this id")
     return {"ok": True}
 

@@ -6,6 +6,15 @@ from core.llm import EMPTY_ANSWER_NOTE, FINAL_STEP_NOTE, LLM, run_loop
 from core.tools import Tool, schema
 
 
+class FakeStream(list):
+    """Like openai.Stream: iterable and a context manager that closes the response."""
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
 class EndlessSearcher:
     """Fake OpenAI client: calls the tool whenever tools are offered, answers otherwise."""
 
@@ -21,7 +30,7 @@ class EndlessSearcher:
             delta = NS(content=None, tool_calls=[call])
         else:
             delta = NS(content="Not found in the knowledge base.", tool_calls=None)
-        return iter([NS(usage=None, choices=[NS(delta=delta)])])
+        return FakeStream([NS(usage=None, choices=[NS(delta=delta)])])
 
 
 def test_last_step_forces_an_answer(monkeypatch):
@@ -47,7 +56,7 @@ class SilentThinker:
     def create(self, **kw):
         self.requests.append(kw)
         text = "" if len(self.requests) == 1 else "Not found."
-        return iter([NS(usage=None, choices=[NS(delta=NS(content=text or None, tool_calls=None))])])
+        return FakeStream([NS(usage=None, choices=[NS(delta=NS(content=text or None, tool_calls=None))])])
 
 
 def test_empty_answer_is_retried_once_without_tools():

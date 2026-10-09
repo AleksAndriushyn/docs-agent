@@ -72,7 +72,7 @@ export function App() {
     <div className="app">
       <Sidebar collections={collections} collection={collection} onCollection={switchCollection}
         sources={sources} status={status} root={root} onRoot={choose} onChange={() => refresh()} />
-      <Chat key={collection} root={root} collection={collection} sources={sources} />
+      <Chat root={root} collection={collection} sources={sources} />
     </div>
   );
 }
